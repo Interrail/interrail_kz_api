@@ -133,12 +133,11 @@ class InquirySelectors:
         if month is not None:
             queryset = queryset.filter(created_at__month=month)
 
-        # Filter by explicit date range if both provided
-        if date_from is not None and date_to is not None:
-            queryset = queryset.filter(
-                created_at__date__gte=date_from,
-                created_at__date__lte=date_to,
-            )
+        # Filter by explicit date range (each bound applied independently)
+        if date_from is not None:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to is not None:
+            queryset = queryset.filter(created_at__date__lte=date_to)
 
         stats = queryset.aggregate(
             total_inquiries=Count("id"),

@@ -21,8 +21,11 @@ def _auth_client(user):
 
 
 def _set_created(inquiry, dt):
-    # created_at is auto_now_add; .update() bypasses it
-    Inquiry.objects.filter(id=inquiry.id).update(created_at=timezone.make_aware(dt))
+    # created_at is auto_now_add; .update() bypasses it.
+    # dt is naive wall-clock time in the project's TIME_ZONE.
+    Inquiry.objects.filter(id=inquiry.id).update(
+        created_at=timezone.make_aware(dt, timezone.get_current_timezone())
+    )
 
 
 @pytest.mark.django_db
@@ -65,3 +68,23 @@ class TestInquiryStatsDateRange:
         url = reverse("inquiries:inquiry-stats")
         resp = _auth_client(admin_user).get(url)
         assert resp.data["total_inquiries"] == 2
+
+    def test_stats_single_date_from_filters_independently(self, admin_user):
+        recent = Inquiry.objects.create(client="Recent", status="success", text="x", sales_manager=admin_user)
+        old = Inquiry.objects.create(client="Old", status="pending", text="y", sales_manager=admin_user)
+        _set_created(recent, datetime.datetime(2026, 6, 5, 10, 0))
+        _set_created(old, datetime.datetime(2025, 1, 1, 10, 0))
+
+        url = reverse("inquiries:inquiry-stats")
+        resp = _auth_client(admin_user).get(url, {"date_from": "2026-01-01"})
+
+        assert resp.status_code == status.HTTP_200_OK
+        assert resp.data["total_inquiries"] == 1
+        assert resp.data["success_count"] == 1
+
+    def test_stats_from_after_to_returns_400(self, admin_user):
+        url = reverse("inquiries:inquiry-stats")
+        resp = _auth_client(admin_user).get(
+            url, {"date_from": "2026-12-31", "date_to": "2026-01-01"}
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST

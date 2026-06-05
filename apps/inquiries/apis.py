@@ -582,6 +582,12 @@ class InquiryStatsApiView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        if date_from and date_to and date_from > date_to:
+            return Response(
+                {"message": "date_from must not be later than date_to."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Determine manager_id based on user role and permissions
         if request.user.user_type == 'admin':
             # Admins can filter by specific manager_id or see all
