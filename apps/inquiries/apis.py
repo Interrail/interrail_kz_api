@@ -54,6 +54,34 @@ class AttachmentField(serializers.Field):
         return str(value) if value else None
 
 
+def build_inquiry_filter_data(request) -> dict:
+    """Build the FilterSerializer input dict from list/export query params.
+
+    Mirrors the array-param handling (status[], is_new_customer[]) and forces
+    sales_manager_id = request.user.id for non-admin users so they only ever
+    see their own inquiries. Shared by the list and export views so the two
+    can never drift.
+    """
+    status_list = request.GET.getlist("status[]")
+    is_new_customer = request.GET.get("is_new_customer[]")
+
+    data = {}
+    for key, value in request.query_params.items():
+        if key not in ["status[]", "is_new_customer[]"]:
+            data[key] = value
+
+    if status_list:
+        data["status"] = status_list
+
+    if is_new_customer is not None:
+        data["is_new_customer"] = is_new_customer
+
+    if request.user.user_type != "admin":
+        data["sales_manager_id"] = request.user.id
+
+    return data
+
+
 class InquiryListApiView(APIView):
     """
     List inquiries
@@ -158,25 +186,8 @@ class InquiryListApiView(APIView):
         responses={200: InquiryListOutputSerializer},
     )
     def get(self, request):
-        # Validate filters
-        status_list = request.GET.getlist("status[]")
-        is_new_customer = request.GET.get("is_new_customer[]")
-
-        # Build data dict for serializer (preserve single values)
-        data = {}
-        for key, value in request.query_params.items():
-            if key not in ["status[]", "is_new_customer[]"]:  # Handle array parameters separately
-                data[key] = value
-
-        if status_list:
-            data["status"] = status_list
-
-        if is_new_customer is not None:
-            data["is_new_customer"] = is_new_customer
-
-        # Add manager filtering for non-admin users
-        if request.user.user_type != 'admin':
-            data['sales_manager_id'] = request.user.id
+        # Build filters (array params + non-admin manager lock) via shared helper
+        data = build_inquiry_filter_data(request)
 
         filter_serializer = self.FilterSerializer(data=data)
         filter_serializer.is_valid(raise_exception=True)
