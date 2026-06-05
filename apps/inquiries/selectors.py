@@ -103,7 +103,9 @@ class InquirySelectors:
     def get_inquiries_stats(
         manager_id: int = None,
         year: int = None,
-        month: int = None
+        month: int = None,
+        date_from=None,
+        date_to=None,
     ) -> dict[str, Any]:
         """
         Get inquiry statistics using a single database query
@@ -130,6 +132,12 @@ class InquirySelectors:
         # Filter by month if provided
         if month is not None:
             queryset = queryset.filter(created_at__month=month)
+
+        # Filter by explicit date range (each bound applied independently)
+        if date_from is not None:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to is not None:
+            queryset = queryset.filter(created_at__date__lte=date_to)
 
         stats = queryset.aggregate(
             total_inquiries=Count("id"),

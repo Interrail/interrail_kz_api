@@ -113,6 +113,8 @@ class InquiryListApiView(APIView):
         sales_manager_id = serializers.IntegerField(required=False)
         year = serializers.IntegerField(required=False, min_value=1900, max_value=9999)
         month = serializers.IntegerField(required=False, min_value=1, max_value=12)
+        date_from = serializers.DateField(required=False)
+        date_to = serializers.DateField(required=False)
 
     class InquiryListOutputSerializer(serializers.ModelSerializer):
         attachment_url = serializers.SerializerMethodField()
@@ -593,6 +595,16 @@ class InquiryStatsApiView(APIView):
                 description="Filter by month (1-12)",
                 required=False
             ),
+            OpenApiParameter(
+                "date_from", OpenApiTypes.DATE,
+                description="Start of date range (YYYY-MM-DD); use with date_to",
+                required=False,
+            ),
+            OpenApiParameter(
+                "date_to", OpenApiTypes.DATE,
+                description="End of date range (YYYY-MM-DD); use with date_from",
+                required=False,
+            ),
         ],
         responses={200: InquiryStatsOutputSerializer},
     )
@@ -632,6 +644,33 @@ class InquiryStatsApiView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+        # Parse optional explicit date range (YYYY-MM-DD)
+        date_from_raw = request.query_params.get('date_from')
+        date_to_raw = request.query_params.get('date_to')
+        date_from = date_to = None
+        if date_from_raw:
+            try:
+                date_from = datetime.strptime(date_from_raw, "%Y-%m-%d").date()
+            except ValueError:
+                return Response(
+                    {"message": "Invalid date_from format. Use YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if date_to_raw:
+            try:
+                date_to = datetime.strptime(date_to_raw, "%Y-%m-%d").date()
+            except ValueError:
+                return Response(
+                    {"message": "Invalid date_to format. Use YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if date_from and date_to and date_from > date_to:
+            return Response(
+                {"message": "date_from must not be later than date_to."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Determine manager_id based on user role and permissions
         if request.user.user_type == 'admin':
             # Admins can filter by specific manager_id or see all
@@ -653,7 +692,9 @@ class InquiryStatsApiView(APIView):
         data = InquirySelectors.get_inquiries_stats(
             manager_id=manager_id,
             year=year,
-            month=month
+            month=month,
+            date_from=date_from,
+            date_to=date_to
         )
 
         return Response(
