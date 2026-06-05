@@ -17,6 +17,10 @@ class InquiryFilter(django_filters.FilterSet):
     year = django_filters.NumberFilter(field_name='created_at', lookup_expr='year')
     month = django_filters.NumberFilter(field_name='created_at', lookup_expr='month')
 
+    # Explicit date range on created_at
+    date_from = django_filters.DateFilter(field_name="created_at", lookup_expr="date__gte")
+    date_to = django_filters.DateFilter(field_name="created_at", lookup_expr="date__lte")
+
     # Search across multiple fields
     search = django_filters.CharFilter(method="filter_search")
 
@@ -32,6 +36,8 @@ class InquiryFilter(django_filters.FilterSet):
             "sales_manager",
             "year",
             "month",
+            "date_from",
+            "date_to",
             "search",
         ]
 

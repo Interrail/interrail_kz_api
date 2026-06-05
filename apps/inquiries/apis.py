@@ -80,6 +80,8 @@ class InquiryListApiView(APIView):
         sales_manager_id = serializers.IntegerField(required=False)
         year = serializers.IntegerField(required=False, min_value=1900, max_value=9999)
         month = serializers.IntegerField(required=False, min_value=1, max_value=12)
+        date_from = serializers.DateField(required=False)
+        date_to = serializers.DateField(required=False)
 
     class InquiryListOutputSerializer(serializers.ModelSerializer):
         attachment_url = serializers.SerializerMethodField()
