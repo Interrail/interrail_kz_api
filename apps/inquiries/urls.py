@@ -5,6 +5,7 @@ from .apis import (
     InquiryCreateApiView,
     InquiryDeleteApiView,
     InquiryDetailApiView,
+    InquiryExportApiView,
     InquiryFailedApiView,
     InquiryKPILockApiView,
     InquiryListApiView,
@@ -49,6 +50,7 @@ inquiry_patterns = [
     ),
     # Inquiry utility operations
     path("stats/", InquiryStatsApiView.as_view(), name="inquiry-stats"),
+    path("export/", InquiryExportApiView.as_view(), name="inquiry-export"),
 
     # KPI Statistics APIs
     path("kpi/manager/<int:manager_id>/", ManagerKPIApiView.as_view(), name="manager-kpi"),

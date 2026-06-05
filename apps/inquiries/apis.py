@@ -1,5 +1,10 @@
-from datetime import datetime
+import io
+from datetime import date, datetime
 
+import pandas as pd
+from django.http import HttpResponse
+from django.utils.html import strip_tags
+from django.utils.timezone import localtime
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
@@ -204,6 +209,71 @@ class InquiryListApiView(APIView):
             request=request,
             view=self,
         )
+
+
+class InquiryExportApiView(APIView):
+    """Export the (optionally filtered) inquiries list as an .xlsx file."""
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsManagerOrAdmin]
+
+    # Reuse the list view's filter contract verbatim
+    FilterSerializer = InquiryListApiView.FilterSerializer
+
+    EXPORT_COLUMNS = [
+        "ID", "Sales Manager", "Client", "Status",
+        "New Customer", "Text", "File", "Created At",
+    ]
+
+    @extend_schema(
+        tags=["Inquiries"],
+        summary="Export Inquiries to Excel",
+        responses={200: OpenApiTypes.BINARY},
+    )
+    def get(self, request):
+        data = build_inquiry_filter_data(request)
+
+        filter_serializer = self.FilterSerializer(data=data)
+        filter_serializer.is_valid(raise_exception=True)
+
+        queryset = InquirySelectors.get_inquiries_list(
+            filters=filter_serializer.validated_data
+        )
+
+        rows = [self._build_row(inquiry) for inquiry in queryset]
+        df = pd.DataFrame(rows, columns=self.EXPORT_COLUMNS)
+
+        buffer = io.BytesIO()
+        df.to_excel(buffer, index=False, engine="openpyxl", sheet_name="Inquiries")
+        buffer.seek(0)
+
+        filename = f"inquiries_{date.today().isoformat()}.xlsx"
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+    @staticmethod
+    def _build_row(inquiry):
+        manager = inquiry.sales_manager
+        attachment = (
+            inquiry.attachment.name.split("/")[-1] if inquiry.attachment else ""
+        )
+        return {
+            "ID": inquiry.id,
+            "Sales Manager": manager.username if manager else "",
+            "Client": inquiry.client,
+            "Status": inquiry.get_status_display(),
+            "New Customer": "Yes" if inquiry.is_new_customer else "No",
+            "Text": strip_tags(inquiry.text) if inquiry.text else "",
+            "File": attachment,
+            "Created At": localtime(inquiry.created_at).strftime("%Y-%m-%d %H:%M"),
+        }
 
 
 class InquiryCreateApiView(APIView):
