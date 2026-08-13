@@ -145,6 +145,9 @@ jobs:
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          MUNICH_API_BASE_URL: http://munich-api.invalid
+          MUNICH_API_USERNAME: ci
+          MUNICH_API_PASSWORD: ci
           TELEGRAM_CONTEXT_FILE: /tmp/context.json
 
       - name: 🧪 Run Tests
@@ -230,6 +233,9 @@ jobs:
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          MUNICH_API_BASE_URL: http://munich-api.invalid
+          MUNICH_API_USERNAME: ci
+          MUNICH_API_PASSWORD: ci
           TELEGRAM_CONTEXT_FILE: /tmp/context.json
 
       - name: 🏗️ Build Check
@@ -254,6 +260,9 @@ jobs:
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          MUNICH_API_BASE_URL: http://munich-api.invalid
+          MUNICH_API_USERNAME: ci
+          MUNICH_API_PASSWORD: ci
           TELEGRAM_CONTEXT_FILE: /tmp/context.json
 
       - name: 📊 Upload Coverage Reports
@@ -370,8 +379,7 @@ jobs:
           git pull origin master && \
           source venv/bin/activate && \
           pip install -r requirements.txt && \
-          python manage.py makemigrations && \
-          python manage.py migrate && \
+          python manage.py migrate --noinput && \
           python manage.py collectstatic --noinput && \
           sudo systemctl restart interrail_kz && \
           sudo systemctl restart nginx
