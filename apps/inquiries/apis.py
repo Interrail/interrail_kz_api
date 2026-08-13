@@ -10,6 +10,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.api_config.pagination import (
@@ -298,8 +299,15 @@ class InquiryCreateApiView(APIView):
     Supports both JSON (text) and multipart/form-data (file) requests
     """
 
+    # Deliberately open: @my_interrail_bot posts here on behalf of Telegram users
+    # and holds no credentials. Being open, it is the one endpoint an anonymous
+    # caller can use to write rows and store files, so it carries its own rate
+    # limit. Allowed file types are enforced on the model, which covers the
+    # authenticated update path too.
     authentication_classes = []
     permission_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "inquiry-create"
     parser_classes = [JSONParser, MultiPartParser]
 
     class InquiryCreateSerializer(serializers.Serializer):

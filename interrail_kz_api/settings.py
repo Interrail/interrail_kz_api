@@ -182,6 +182,19 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "apps.core.exception_handlers.exception_handler",
+    # Requests arrive through the k8s ingress, which appends the caller's address
+    # to X-Forwarded-For. Without this, DRF keys the throttle on the whole header
+    # — whose left-hand side the caller writes — so anyone could mint a fresh
+    # quota per request. With one proxy declared it reads the address the ingress
+    # itself appended, which a client cannot forge.
+    "NUM_PROXIES": 1,
+    # Only the anonymous inquiry endpoint is throttled; everything else is behind
+    # authentication. Roughly five times the busiest day on record (13), so it
+    # bounds abuse without being reachable by normal use.
+    "DEFAULT_THROTTLE_RATES": {
+        "inquiry-create": "60/hour",
+    },
 }
 
 # JWT Settings

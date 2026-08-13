@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from ckeditor.fields import RichTextField
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -19,6 +20,28 @@ def validate_file_size(value):
         raise ValidationError(
             f"File too large. Maximum size is {max_size / (1024 * 1024):.0f}MB"
         )
+
+
+# Uploads are reachable at /media/... without authentication, so the browser
+# renders whatever it is handed: an .html or .svg attachment would execute on the
+# API's own origin. This is an allowlist of what documents actually arrive with
+# inquiries — it checks the extension, which is what decides the served
+# Content-Type, and says nothing about the contents.
+validate_file_extension = FileExtensionValidator(
+    allowed_extensions=[
+        "pdf",
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+        "doc",
+        "docx",
+        "xls",
+        "xlsx",
+        "csv",
+        "txt",
+    ]
+)
 
 
 class Inquiry(TimeStampModel):
@@ -41,7 +64,7 @@ class Inquiry(TimeStampModel):
         upload_to="inquiry_attachments/%Y/%m/%d/",
         null=True,
         blank=True,
-        validators=[validate_file_size],
+        validators=[validate_file_size, validate_file_extension],
     )
     comment = RichTextField(blank=True, default="")
     sales_manager = models.ForeignKey(
