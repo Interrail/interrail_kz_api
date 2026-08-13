@@ -393,14 +393,19 @@ class TestTokenTypeEnforcement:
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_blacklisted_refresh_token_is_rejected(
-        self, api_client, profile_url, test_user
+    def test_blacklisted_refresh_token_cannot_mint_a_new_access_token(
+        self, api_client, test_user
     ):
-        """Logout blacklists the refresh token; it must not survive as a credential."""
+        """Logout must actually revoke: the blacklisted token buys nothing at /refresh/.
+
+        Asserting it against a protected endpoint would prove nothing — AccessToken
+        turns away every refresh token on token_type alone, blacklisted or not. The
+        refresh endpoint is where the blacklist is the only thing standing in the way.
+        """
         refresh = RefreshToken.for_user(test_user)
         refresh.blacklist()
 
-        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh}")
-        response = api_client.get(profile_url)
+        api_client.cookies["refresh_token"] = str(refresh)
+        response = api_client.post(reverse("authentication:refresh"))
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
