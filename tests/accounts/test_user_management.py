@@ -190,14 +190,14 @@ class TestUserServices:
             username="manager_with_inquiries",
             email="manager@example.com",
             password="password123",
-            user_type="manager"
+            user_type="manager",
         )
 
         inquiry = Inquiry.objects.create(
             client="Test Client",
             text="Test inquiry",
             sales_manager=user,
-            status="pending"
+            status="pending",
         )
         inquiry_id = inquiry.id
 

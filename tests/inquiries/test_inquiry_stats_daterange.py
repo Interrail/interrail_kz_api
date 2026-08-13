@@ -33,8 +33,10 @@ class TestInquiryStatsDateRange:
     @pytest.fixture
     def admin_user(self):
         return CustomUser.objects.create_user(
-            username="admin", email="admin@example.com",
-            password="testpass123", user_type="admin",
+            username="admin",
+            email="admin@example.com",
+            password="testpass123",
+            user_type="admin",
         )
 
     def test_stats_respects_date_range(self, admin_user):
@@ -63,15 +65,23 @@ class TestInquiryStatsDateRange:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_stats_no_date_returns_all(self, admin_user):
-        Inquiry.objects.create(client="A", status="success", text="x", sales_manager=admin_user)
-        Inquiry.objects.create(client="B", status="pending", text="y", sales_manager=admin_user)
+        Inquiry.objects.create(
+            client="A", status="success", text="x", sales_manager=admin_user
+        )
+        Inquiry.objects.create(
+            client="B", status="pending", text="y", sales_manager=admin_user
+        )
         url = reverse("inquiries:inquiry-stats")
         resp = _auth_client(admin_user).get(url)
         assert resp.data["total_inquiries"] == 2
 
     def test_stats_single_date_from_filters_independently(self, admin_user):
-        recent = Inquiry.objects.create(client="Recent", status="success", text="x", sales_manager=admin_user)
-        old = Inquiry.objects.create(client="Old", status="pending", text="y", sales_manager=admin_user)
+        recent = Inquiry.objects.create(
+            client="Recent", status="success", text="x", sales_manager=admin_user
+        )
+        old = Inquiry.objects.create(
+            client="Old", status="pending", text="y", sales_manager=admin_user
+        )
         _set_created(recent, datetime.datetime(2026, 6, 5, 10, 0))
         _set_created(old, datetime.datetime(2025, 1, 1, 10, 0))
 

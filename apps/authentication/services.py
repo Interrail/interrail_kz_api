@@ -118,7 +118,7 @@ class TelegramAuthenticationServices:
             user = CustomUser.objects.get(
                 telegram_id=telegram_id,
                 user_type__in=["manager", "admin"],
-                is_active=True
+                is_active=True,
             )
 
             # Generate JWT tokens
@@ -152,9 +152,7 @@ class TelegramAuthenticationServices:
         """
         try:
             user = CustomUser.objects.get(
-                phone=phone,
-                user_type__in=["manager", "admin"],
-                is_active=True
+                phone=phone, user_type__in=["manager", "admin"], is_active=True
             )
 
             # Link telegram_id to user
@@ -192,7 +190,5 @@ class TelegramAuthenticationServices:
         Check if telegram_id already exists for any manager
         """
         return CustomUser.objects.filter(
-            telegram_id=telegram_id,
-            user_type__in=["manager", "admin"],
-            is_active=True
+            telegram_id=telegram_id, user_type__in=["manager", "admin"], is_active=True
         ).exists()

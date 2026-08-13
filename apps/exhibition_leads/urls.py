@@ -12,7 +12,9 @@ urlpatterns = [
     # Lead CRUD endpoints
     path("", ExhibitionLeadListAPI.as_view(), name="exhibition-lead-list"),
     path(
-        "<int:lead_id>/", ExhibitionLeadDetailAPI.as_view(), name="exhibition-lead-detail"
+        "<int:lead_id>/",
+        ExhibitionLeadDetailAPI.as_view(),
+        name="exhibition-lead-detail",
     ),
     # Reference data
     path(

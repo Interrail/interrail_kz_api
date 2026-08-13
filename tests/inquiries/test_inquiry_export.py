@@ -13,9 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.accounts.models import CustomUser
 from apps.inquiries.models import Inquiry
 
-XLSX_CONTENT_TYPE = (
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 def _auth_client(user):
@@ -34,15 +32,19 @@ class TestInquiryExport:
     @pytest.fixture
     def admin_user(self):
         return CustomUser.objects.create_user(
-            username="admin", email="admin@example.com",
-            password="testpass123", user_type="admin",
+            username="admin",
+            email="admin@example.com",
+            password="testpass123",
+            user_type="admin",
         )
 
     @pytest.fixture
     def manager_user(self):
         return CustomUser.objects.create_user(
-            username="manager", email="manager@example.com",
-            password="testpass123", user_type="manager",
+            username="manager",
+            email="manager@example.com",
+            password="testpass123",
+            user_type="manager",
         )
 
     def test_export_requires_auth(self):
@@ -73,8 +75,14 @@ class TestInquiryExport:
 
         df = _read_xlsx(response)
         assert list(df.columns) == [
-            "ID", "Sales Manager", "Client", "Status",
-            "New Customer", "Text", "File", "Created At",
+            "ID",
+            "Sales Manager",
+            "Client",
+            "Status",
+            "New Customer",
+            "Text",
+            "File",
+            "Created At",
         ]
         assert set(df["Client"]) == {"Alpha", "Beta"}
         assert "hi" in set(df["Text"])
@@ -92,15 +100,13 @@ class TestInquiryExport:
 
     def test_export_limits_non_admin_to_own_inquiries(self, manager_user):
         other = CustomUser.objects.create_user(
-            username="other", email="other@example.com",
-            password="testpass123", user_type="manager",
+            username="other",
+            email="other@example.com",
+            password="testpass123",
+            user_type="manager",
         )
-        Inquiry.objects.create(
-            client="Mine", sales_manager=manager_user, text="mine"
-        )
-        Inquiry.objects.create(
-            client="Theirs", sales_manager=other, text="theirs"
-        )
+        Inquiry.objects.create(client="Mine", sales_manager=manager_user, text="mine")
+        Inquiry.objects.create(client="Theirs", sales_manager=other, text="theirs")
 
         url = reverse("inquiries:inquiry-export")
         response = _auth_client(manager_user).get(url)
