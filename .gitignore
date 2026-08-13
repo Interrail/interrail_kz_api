@@ -180,3 +180,6 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+
+# Throttle counters (file-based cache)
+.django_cache/

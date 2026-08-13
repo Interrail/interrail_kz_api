@@ -99,10 +99,14 @@ class InquiryServices:
             update_fields.append("text")
             content_updated = True
 
+        # Held until the replacement is validated and saved. Deleting it here, as
+        # this used to, destroys the stored file before full_clean() has a say —
+        # a rejected replacement then leaves the row pointing at nothing.
+        superseded_attachment = None
+
         if attachment is not ...:  # Only update if attachment was explicitly provided
-            # Delete old attachment if exists and we're updating it
             if inquiry.attachment:
-                inquiry.attachment.delete(save=False)
+                superseded_attachment = inquiry.attachment
             inquiry.attachment = attachment
             update_fields.append("attachment")
             content_updated = True
@@ -155,6 +159,10 @@ class InquiryServices:
                 # Run validation before saving
                 inquiry.full_clean()
                 inquiry.save(update_fields=update_fields)
+
+            # Only now is the old file genuinely unreferenced.
+            if superseded_attachment is not None:
+                superseded_attachment.delete(save=False)
 
         return inquiry
 

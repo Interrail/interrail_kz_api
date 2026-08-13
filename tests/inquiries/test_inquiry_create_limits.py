@@ -9,6 +9,7 @@ uploads are restricted to document types.
 
 import pytest
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
@@ -16,6 +17,8 @@ from rest_framework.test import APIClient
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.models import CustomUser
+from apps.inquiries.models import Inquiry
+from apps.inquiries.services import InquiryServices
 
 
 @pytest.fixture
@@ -177,3 +180,34 @@ class TestCreateThrottle:
 
         assert post("1.1.1.1").status_code == status.HTTP_201_CREATED
         assert post("2.2.2.2").status_code == status.HTTP_429_TOO_MANY_REQUESTS
+
+
+@pytest.mark.django_db
+class TestRejectedReplacementKeepsTheOldFile:
+    def test_failed_update_does_not_destroy_the_stored_attachment(self, sales_manager):
+        """A rejected replacement must leave the existing file intact.
+
+        update_inquiry() used to delete the old file before full_clean() ran, so
+        a refused update answered 400 while the row pointed at a file that no
+        longer existed. Reachable through the size limit too, not just the new
+        extension check.
+        """
+        inquiry = InquiryServices.create_inquiry(
+            client="Acme",
+            attachment=SimpleUploadedFile("original.pdf", b"the real document"),
+            sales_manager_id=sales_manager.id,
+        )
+        stored_name = inquiry.attachment.name
+        assert inquiry.attachment.storage.exists(stored_name)
+
+        with pytest.raises(ValidationError):
+            InquiryServices.update_inquiry(
+                inquiry=inquiry,
+                attachment=SimpleUploadedFile("replacement.svg", b"<svg/>"),
+            )
+
+        fresh = Inquiry.objects.get(pk=inquiry.pk)
+        assert fresh.attachment.name == stored_name
+        assert fresh.attachment.storage.exists(stored_name), (
+            "the original file was deleted even though the replacement was refused"
+        )

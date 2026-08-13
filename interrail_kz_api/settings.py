@@ -117,6 +117,19 @@ DATABASES = {
 }
 
 
+# Throttle counters live in the cache, and gunicorn runs three workers. The
+# default in-memory cache gives each worker its own copy, so a rate of N would
+# really admit about 3N and answer 201 or 429 depending on which worker took the
+# request. A file-backed cache is shared by every process on the host, needs no
+# extra service or dependency, and is far quicker than the traffic it counts.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": env("CACHE_DIR", default=str(BASE_DIR / ".django_cache")),
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
