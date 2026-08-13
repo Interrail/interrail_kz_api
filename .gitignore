@@ -159,10 +159,9 @@ static/
 ehthumbs.db
 Thumbs.db
 
-# Django migrations - ignore all migration files except __init__.py
-**/migrations/[0-9]*.py
-# Keep __init__.py files in migrations directories
-!**/migrations/__init__.py
+# Django migrations are tracked in git: they are the schema's source of truth.
+# Ignoring them meant the deploy had to run `makemigrations` on the prod host,
+# so the migration history lived only on that server.
 
 # Node modules (if using frontend tools)
 node_modules/
