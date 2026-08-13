@@ -108,6 +108,48 @@ class TestCreateThrottle:
         assert post().status_code == status.HTTP_201_CREATED
         assert post().status_code == status.HTTP_429_TOO_MANY_REQUESTS
 
+    def test_uploads_answer_to_the_tighter_rate(
+        self, anonymous_client, sales_manager, create_url, monkeypatch
+    ):
+        """A file-carrying request is limited harder than a plain one.
+
+        Both go through the same view, and the frontend posts multipart either
+        way, so the split has to key on the attachment actually being there.
+        """
+        monkeypatch.setattr(
+            ScopedRateThrottle,
+            "THROTTLE_RATES",
+            {"inquiry-create": "10/hour", "inquiry-create-upload": "1/hour"},
+        )
+        cache.clear()
+
+        def post_with_file():
+            return anonymous_client.post(
+                create_url,
+                {
+                    "client": "Acme",
+                    "attachment": SimpleUploadedFile("doc.pdf", b"payload"),
+                    "sales_manager_id": sales_manager.id,
+                },
+                format="multipart",
+            )
+
+        def post_without_file():
+            return anonymous_client.post(
+                create_url,
+                {
+                    "client": "Acme",
+                    "text": "quote",
+                    "sales_manager_id": sales_manager.id,
+                },
+                format="multipart",
+            )
+
+        assert post_with_file().status_code == status.HTTP_201_CREATED
+        assert post_with_file().status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        # The text quota is untouched by the upload ceiling.
+        assert post_without_file().status_code == status.HTTP_201_CREATED
+
     def test_throttle_key_cannot_be_forged_via_x_forwarded_for(
         self, anonymous_client, sales_manager, create_url, monkeypatch
     ):

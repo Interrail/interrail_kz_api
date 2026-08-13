@@ -190,10 +190,15 @@ REST_FRAMEWORK = {
     # itself appended, which a client cannot forge.
     "NUM_PROXIES": 1,
     # Only the anonymous inquiry endpoint is throttled; everything else is behind
-    # authentication. Roughly five times the busiest day on record (13), so it
-    # bounds abuse without being reachable by normal use.
+    # authentication. Two rates, because the two risks are not the same size:
+    # inquiries are almost always text (1 of 837 has ever carried a file), so the
+    # general rate is set well clear of real traffic — the busiest day on record
+    # is 13 — and a refusal there means a lost customer request. Uploads are the
+    # part that consumes disk, at up to 10MB each, so they get a tighter ceiling
+    # that is still far above anything the product has ever done in an hour.
     "DEFAULT_THROTTLE_RATES": {
-        "inquiry-create": "60/hour",
+        "inquiry-create": "300/hour",
+        "inquiry-create-upload": "20/hour",
     },
 }
 

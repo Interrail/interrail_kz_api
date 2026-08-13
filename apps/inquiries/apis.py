@@ -310,6 +310,18 @@ class InquiryCreateApiView(APIView):
     throttle_scope = "inquiry-create"
     parser_classes = [JSONParser, MultiPartParser]
 
+    def get_throttles(self):
+        """Requests carrying a file answer to the tighter upload rate.
+
+        Not by content type: the frontend posts multipart even for a plain text
+        inquiry, so keying on that would put ordinary work under the strict
+        ceiling. Only an actual attachment costs disk, so only that is limited
+        harder.
+        """
+        if self.request.FILES:
+            self.throttle_scope = "inquiry-create-upload"
+        return super().get_throttles()
+
     class InquiryCreateSerializer(serializers.Serializer):
         client = serializers.CharField(max_length=255, required=True)
         text = serializers.CharField(required=False, allow_blank=True)
