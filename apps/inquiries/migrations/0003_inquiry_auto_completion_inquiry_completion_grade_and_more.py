@@ -7,84 +7,127 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inquiries', '0002_inquiry_attachment_alter_inquiry_text'),
+        ("inquiries", "0002_inquiry_attachment_alter_inquiry_text"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='inquiry',
-            name='auto_completion',
-            field=models.BooleanField(default=False, help_text='Skip automatic KPI calculation for this inquiry'),
+            model_name="inquiry",
+            name="auto_completion",
+            field=models.BooleanField(
+                default=False,
+                help_text="Skip automatic KPI calculation for this inquiry",
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='completion_grade',
-            field=models.CharField(blank=True, choices=[('A', 'Excellent'), ('B', 'Good'), ('C', 'Average')], help_text='Completion time grade: A (≤120hrs), B (≤168hrs), C (>168hrs)', max_length=1, null=True),
+            model_name="inquiry",
+            name="completion_grade",
+            field=models.CharField(
+                blank=True,
+                choices=[("A", "Excellent"), ("B", "Good"), ("C", "Average")],
+                help_text="Completion time grade: A (≤120hrs), B (≤168hrs), C (>168hrs)",
+                max_length=1,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='failed_at',
-            field=models.DateTimeField(blank=True, help_text='When inquiry failed', null=True),
+            model_name="inquiry",
+            name="failed_at",
+            field=models.DateTimeField(
+                blank=True, help_text="When inquiry failed", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='is_locked',
-            field=models.BooleanField(default=False, help_text='Lock inquiry from KPI recalculation'),
+            model_name="inquiry",
+            name="is_locked",
+            field=models.BooleanField(
+                default=False, help_text="Lock inquiry from KPI recalculation"
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='quote_grade',
-            field=models.CharField(blank=True, choices=[('A', 'Excellent'), ('B', 'Good'), ('C', 'Average')], help_text='Response time grade: A (≤60hrs), B (≤84hrs), C (>84hrs)', max_length=1, null=True),
+            model_name="inquiry",
+            name="quote_grade",
+            field=models.CharField(
+                blank=True,
+                choices=[("A", "Excellent"), ("B", "Good"), ("C", "Average")],
+                help_text="Response time grade: A (≤60hrs), B (≤84hrs), C (>84hrs)",
+                max_length=1,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='quote_time',
-            field=models.DurationField(default=datetime.timedelta(0), help_text='Business hours from creation to quote'),
+            model_name="inquiry",
+            name="quote_time",
+            field=models.DurationField(
+                default=datetime.timedelta(0),
+                help_text="Business hours from creation to quote",
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='quoted_at',
-            field=models.DateTimeField(blank=True, help_text='When inquiry was quoted', null=True),
+            model_name="inquiry",
+            name="quoted_at",
+            field=models.DateTimeField(
+                blank=True, help_text="When inquiry was quoted", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='resolution_time',
-            field=models.DurationField(default=datetime.timedelta(0), help_text='Business hours from quote to resolution'),
+            model_name="inquiry",
+            name="resolution_time",
+            field=models.DurationField(
+                default=datetime.timedelta(0),
+                help_text="Business hours from quote to resolution",
+            ),
         ),
         migrations.AddField(
-            model_name='inquiry',
-            name='success_at',
-            field=models.DateTimeField(blank=True, help_text='When inquiry was successful', null=True),
+            model_name="inquiry",
+            name="success_at",
+            field=models.DateTimeField(
+                blank=True, help_text="When inquiry was successful", null=True
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['sales_manager', '-created_at'], name='inquiries_i_sales_m_666aab_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["sales_manager", "-created_at"],
+                name="inquiries_i_sales_m_666aab_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['quoted_at'], name='inquiries_i_quoted__d545d3_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["quoted_at"], name="inquiries_i_quoted__d545d3_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['success_at'], name='inquiries_i_success_fa4ea3_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["success_at"], name="inquiries_i_success_fa4ea3_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['failed_at'], name='inquiries_i_failed__878a5b_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["failed_at"], name="inquiries_i_failed__878a5b_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['is_new_customer'], name='inquiries_i_is_new__8301f3_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["is_new_customer"], name="inquiries_i_is_new__8301f3_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['quote_grade'], name='inquiries_i_quote_g_dfac11_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["quote_grade"], name="inquiries_i_quote_g_dfac11_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='inquiry',
-            index=models.Index(fields=['completion_grade'], name='inquiries_i_complet_7ea2f6_idx'),
+            model_name="inquiry",
+            index=models.Index(
+                fields=["completion_grade"], name="inquiries_i_complet_7ea2f6_idx"
+            ),
         ),
     ]

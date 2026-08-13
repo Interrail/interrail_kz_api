@@ -7,20 +7,24 @@ import apps.inquiries.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inquiries', '0001_initial'),
+        ("inquiries", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='inquiry',
-            name='attachment',
-            field=models.FileField(blank=True, null=True, upload_to='inquiry_attachments/%Y/%m/%d/', validators=[apps.inquiries.models.validate_file_size]),
+            model_name="inquiry",
+            name="attachment",
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to="inquiry_attachments/%Y/%m/%d/",
+                validators=[apps.inquiries.models.validate_file_size],
+            ),
         ),
         migrations.AlterField(
-            model_name='inquiry',
-            name='text',
+            model_name="inquiry",
+            name="text",
             field=ckeditor.fields.RichTextField(blank=True, null=True),
         ),
     ]

@@ -6,29 +6,77 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inquiries', '0003_inquiry_auto_completion_inquiry_completion_grade_and_more'),
+        ("inquiries", "0003_inquiry_auto_completion_inquiry_completion_grade_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='KPIWeights',
+            name="KPIWeights",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('response_time_weight', models.DecimalField(decimal_places=2, default=25.0, help_text='Weight for response time KPI (quote efficiency). Value in percentage.', max_digits=5)),
-                ('follow_up_weight', models.DecimalField(decimal_places=2, default=25.0, help_text='Weight for follow-up KPI (completion efficiency). Value in percentage.', max_digits=5)),
-                ('conversion_rate_weight', models.DecimalField(decimal_places=2, default=25.0, help_text='Weight for conversion rate KPI (success rate). Value in percentage.', max_digits=5)),
-                ('new_customer_weight', models.DecimalField(decimal_places=2, default=25.0, help_text='Weight for new customer acquisition KPI. Value in percentage.', max_digits=5)),
-                ('created_by', models.ForeignKey(blank=True, help_text='User who created this configuration', null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "response_time_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=25.0,
+                        help_text="Weight for response time KPI (quote efficiency). Value in percentage.",
+                        max_digits=5,
+                    ),
+                ),
+                (
+                    "follow_up_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=25.0,
+                        help_text="Weight for follow-up KPI (completion efficiency). Value in percentage.",
+                        max_digits=5,
+                    ),
+                ),
+                (
+                    "conversion_rate_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=25.0,
+                        help_text="Weight for conversion rate KPI (success rate). Value in percentage.",
+                        max_digits=5,
+                    ),
+                ),
+                (
+                    "new_customer_weight",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=25.0,
+                        help_text="Weight for new customer acquisition KPI. Value in percentage.",
+                        max_digits=5,
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="User who created this configuration",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'KPI Weights Configuration',
-                'verbose_name_plural': 'KPI Weights Configurations',
-                'ordering': ['-created_at'],
+                "verbose_name": "KPI Weights Configuration",
+                "verbose_name_plural": "KPI Weights Configurations",
+                "ordering": ["-created_at"],
             },
         ),
     ]

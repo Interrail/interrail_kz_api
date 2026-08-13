@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -16,23 +15,62 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Inquiry',
+            name="Inquiry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('client', models.CharField(blank=True, default='', max_length=255)),
-                ('text', ckeditor.fields.RichTextField()),
-                ('comment', ckeditor.fields.RichTextField(blank=True, default='')),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('quoted', 'Quoted'), ('success', 'Success'), ('failed', 'Failed')], default='pending', max_length=20)),
-                ('is_new_customer', models.BooleanField(default=False)),
-                ('sales_manager', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_inquiries', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("client", models.CharField(blank=True, default="", max_length=255)),
+                ("text", ckeditor.fields.RichTextField()),
+                ("comment", ckeditor.fields.RichTextField(blank=True, default="")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("quoted", "Quoted"),
+                            ("success", "Success"),
+                            ("failed", "Failed"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                ("is_new_customer", models.BooleanField(default=False)),
+                (
+                    "sales_manager",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="sales_inquiries",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Inquiry',
-                'verbose_name_plural': 'Inquiries',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['-created_at'], name='inquiries_i_created_2b1632_idx'), models.Index(fields=['status'], name='inquiries_i_status_8fae14_idx'), models.Index(fields=['client'], name='inquiries_i_client_a05205_idx')],
+                "verbose_name": "Inquiry",
+                "verbose_name_plural": "Inquiries",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["-created_at"], name="inquiries_i_created_2b1632_idx"
+                    ),
+                    models.Index(
+                        fields=["status"], name="inquiries_i_status_8fae14_idx"
+                    ),
+                    models.Index(
+                        fields=["client"], name="inquiries_i_client_a05205_idx"
+                    ),
+                ],
             },
         ),
     ]

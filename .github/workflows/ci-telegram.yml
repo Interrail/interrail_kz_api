@@ -135,7 +135,12 @@ jobs:
       - name: 🗄️ Database Setup
         run: |
           (python scripts/telegram_notifier.py update "🗄️ Setting up Database" 50 "running") || true
-          python manage.py migrate
+
+          # Models must not drift from committed migrations. The deploy no longer
+          # runs makemigrations on the server, so nothing downstream would notice.
+          python manage.py makemigrations --check --dry-run
+
+          python manage.py migrate --noinput
         env:
           SECRET_KEY: test-secret-key
           DEBUG: True
