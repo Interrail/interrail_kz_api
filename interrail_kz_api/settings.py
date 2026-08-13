@@ -33,7 +33,9 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1,","0f2d53355716.ngrok-free.app"])
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS", default=["localhost", "127.0.0.1,", "0f2d53355716.ngrok-free.app"]
+)
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
@@ -243,16 +245,20 @@ SPECTACULAR_SETTINGS = {
 
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://systemkz.interrail.uz",
-    "https://system-kz.interrail.uz",
-    "https://07f4e9cd7ff9.ngrok-free.app",
-    "https://b40c9f2b8697.ngrok-free.app",
-    "https://3abfb16da241.ngrok-free.app"
-]
+# Never combine this with CORS_ALLOW_ALL_ORIGINS: django-cors-headers skips the
+# allowlist entirely when it is on, and with credentials enabled it echoes back
+# whichever Origin asked. Any site could then read this API as the logged-in user.
+# The allowlist is env-driven so a new origin needs an .env line, not a release —
+# reaching for allow-all to avoid a deploy is how this got opened in the first place.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "https://systemkz.interrail.uz",
+        "https://system-kz.interrail.uz",
+    ],
+)
 # For development - set to False since you're using HTTP
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "Lax"
