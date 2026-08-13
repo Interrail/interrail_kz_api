@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 User = get_user_model()
 
@@ -30,8 +30,10 @@ class CookieJWTAuthentication(BaseAuthentication):
             return None  # No token found
 
         try:
-            # Validate the token
-            validated_token = UntypedToken(raw_token)
+            # AccessToken, not UntypedToken: UntypedToken skips the token_type
+            # check, so a refresh token authenticated as an access token — and
+            # since it also skips the blacklist, logout did not revoke it.
+            validated_token = AccessToken(raw_token)
             user = self.get_user(validated_token)
 
             return (user, validated_token)
