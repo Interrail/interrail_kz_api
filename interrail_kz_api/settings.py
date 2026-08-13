@@ -250,15 +250,16 @@ CORS_ALLOW_CREDENTIALS = True
 # Never combine this with CORS_ALLOW_ALL_ORIGINS: django-cors-headers skips the
 # allowlist entirely when it is on, and with credentials enabled it echoes back
 # whichever Origin asked. Any site could then read this API as the logged-in user.
-# The allowlist is env-driven so a new origin needs an .env line, not a release —
-# reaching for allow-all to avoid a deploy is how this got opened in the first place.
-CORS_ALLOWED_ORIGINS = env.list(
-    "CORS_ALLOWED_ORIGINS",
-    default=[
-        "https://systemkz.interrail.uz",
-        "https://system-kz.interrail.uz",
-    ],
-)
+#
+# Extra origins are added from the environment rather than replacing the list, so
+# adding one cannot accidentally drop the frontend and lock the product out. A new
+# origin therefore needs an .env line, not a release — needing a release to add one
+# is how someone ended up reaching for allow-all in the first place.
+CORS_ALLOWED_ORIGINS = [
+    "https://systemkz.interrail.uz",
+    "https://system-kz.interrail.uz",
+    *env.list("CORS_EXTRA_ALLOWED_ORIGINS", default=[]),
+]
 # For development - set to False since you're using HTTP
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "Lax"
