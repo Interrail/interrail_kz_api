@@ -88,7 +88,9 @@ def get_business_hours_between(start_date: datetime, end_date: datetime) -> time
     return total_time
 
 
-def _calculate_business_hours_basic(start_date: datetime, end_date: datetime) -> timedelta:
+def _calculate_business_hours_basic(
+    start_date: datetime, end_date: datetime
+) -> timedelta:
     """
     Fallback business hours calculation without pandas.
 
@@ -182,11 +184,7 @@ def get_grade_points(grade: str | None) -> int:
     Returns:
         int: Points (A=3, B=2, C=-1, None=0)
     """
-    grade_points = {
-        "A": 3,
-        "B": 2,
-        "C": -1
-    }
+    grade_points = {"A": 3, "B": 2, "C": -1}
     return grade_points.get(grade, 0)
 
 
@@ -206,7 +204,9 @@ def calculate_conversion_percentage(success_count: int, total_processed: int) ->
     return (success_count / total_processed) * 100
 
 
-def calculate_kpi_target_percentage(actual_value: float, multiplier: float = 10.0, max_target: float = 100.0) -> float:
+def calculate_kpi_target_percentage(
+    actual_value: float, multiplier: float = 10.0, max_target: float = 100.0
+) -> float:
     """
     Calculate KPI target percentage using standard formula.
 

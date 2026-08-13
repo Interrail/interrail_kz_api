@@ -23,5 +23,9 @@ urlpatterns = [
     path("change-password/", ChangePasswordApiView.as_view(), name="change-password"),
     path("verify-token/", VerifyTokenApiView.as_view(), name="verify-token"),
     path("telegram/", TelegramAuthApiView.as_view(), name="telegram-auth"),
-    path("telegram/phone/", TelegramPhoneAuthApiView.as_view(), name="telegram-phone-auth"),
+    path(
+        "telegram/phone/",
+        TelegramPhoneAuthApiView.as_view(),
+        name="telegram-phone-auth",
+    ),
 ]

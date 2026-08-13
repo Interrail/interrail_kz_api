@@ -21,7 +21,7 @@ class InquiryServices:
         *,
         client: str,
         text: str = None,
-        attachment = None,
+        attachment=None,
         comment: str = "",
         sales_manager_id: int = None,
         is_new_customer: bool = False,
@@ -78,7 +78,7 @@ class InquiryServices:
         inquiry: Inquiry,
         client: str = None,
         text: str = None,
-        attachment = ...,  # Use Ellipsis to distinguish between None and not provided
+        attachment=...,  # Use Ellipsis to distinguish between None and not provided
         status: str = None,
         comment: str = None,
         sales_manager_id: int = None,
@@ -181,7 +181,9 @@ class InquiryKPIServices:
     """
 
     @staticmethod
-    def quote_inquiry(*, inquiry: Inquiry, quoted_at: timezone.datetime = None) -> Inquiry:
+    def quote_inquiry(
+        *, inquiry: Inquiry, quoted_at: timezone.datetime = None
+    ) -> Inquiry:
         """
         Mark inquiry as quoted and calculate quote KPI metrics
 
@@ -211,14 +213,16 @@ class InquiryKPIServices:
             inquiry.quote_time = quote_time
             inquiry.quote_grade = quote_grade
 
-            inquiry.save(update_fields=[
-                'status', 'quoted_at', 'quote_time', 'quote_grade'
-            ])
+            inquiry.save(
+                update_fields=["status", "quoted_at", "quote_time", "quote_grade"]
+            )
 
         return inquiry
 
     @staticmethod
-    def complete_inquiry_success(*, inquiry: Inquiry, success_at: timezone.datetime = None) -> Inquiry:
+    def complete_inquiry_success(
+        *, inquiry: Inquiry, success_at: timezone.datetime = None
+    ) -> Inquiry:
         """
         Mark inquiry as successful and calculate completion KPI metrics
 
@@ -233,7 +237,9 @@ class InquiryKPIServices:
             raise ValueError("Cannot update locked inquiry")
 
         if inquiry.status not in ["quoted"]:
-            raise ValueError(f"Cannot mark inquiry as successful with status '{inquiry.status}'")
+            raise ValueError(
+                f"Cannot mark inquiry as successful with status '{inquiry.status}'"
+            )
 
         if not inquiry.quoted_at:
             raise ValueError("Cannot mark as successful without quote timestamp")
@@ -242,7 +248,9 @@ class InquiryKPIServices:
 
         with transaction.atomic():
             # Calculate resolution time and grade
-            resolution_time = get_business_hours_between(inquiry.quoted_at, success_timestamp)
+            resolution_time = get_business_hours_between(
+                inquiry.quoted_at, success_timestamp
+            )
             completion_grade = calculate_completion_grade(resolution_time)
 
             # Update inquiry
@@ -251,14 +259,21 @@ class InquiryKPIServices:
             inquiry.resolution_time = resolution_time
             inquiry.completion_grade = completion_grade
 
-            inquiry.save(update_fields=[
-                'status', 'success_at', 'resolution_time', 'completion_grade'
-            ])
+            inquiry.save(
+                update_fields=[
+                    "status",
+                    "success_at",
+                    "resolution_time",
+                    "completion_grade",
+                ]
+            )
 
         return inquiry
 
     @staticmethod
-    def complete_inquiry_failed(*, inquiry: Inquiry, failed_at: timezone.datetime = None) -> Inquiry:
+    def complete_inquiry_failed(
+        *, inquiry: Inquiry, failed_at: timezone.datetime = None
+    ) -> Inquiry:
         """
         Mark inquiry as failed and calculate completion KPI metrics
 
@@ -273,7 +288,9 @@ class InquiryKPIServices:
             raise ValueError("Cannot update locked inquiry")
 
         if inquiry.status not in ["quoted"]:
-            raise ValueError(f"Cannot mark inquiry as failed with status '{inquiry.status}'")
+            raise ValueError(
+                f"Cannot mark inquiry as failed with status '{inquiry.status}'"
+            )
 
         if not inquiry.quoted_at:
             raise ValueError("Cannot mark as failed without quote timestamp")
@@ -282,7 +299,9 @@ class InquiryKPIServices:
 
         with transaction.atomic():
             # Calculate resolution time and grade
-            resolution_time = get_business_hours_between(inquiry.quoted_at, failed_timestamp)
+            resolution_time = get_business_hours_between(
+                inquiry.quoted_at, failed_timestamp
+            )
             completion_grade = calculate_completion_grade(resolution_time)
 
             # Update inquiry
@@ -291,9 +310,14 @@ class InquiryKPIServices:
             inquiry.resolution_time = resolution_time
             inquiry.completion_grade = completion_grade
 
-            inquiry.save(update_fields=[
-                'status', 'failed_at', 'resolution_time', 'completion_grade'
-            ])
+            inquiry.save(
+                update_fields=[
+                    "status",
+                    "failed_at",
+                    "resolution_time",
+                    "completion_grade",
+                ]
+            )
 
         return inquiry
 
@@ -310,7 +334,9 @@ class InquiryKPIServices:
             Updated inquiry with recalculated KPI data
         """
         if inquiry.is_locked and not force:
-            raise ValueError("Cannot recalculate metrics for locked inquiry (use force=True to override)")
+            raise ValueError(
+                "Cannot recalculate metrics for locked inquiry (use force=True to override)"
+            )
 
         if inquiry.auto_completion and not force:
             return inquiry  # Skip auto-completion inquiries unless forced
@@ -320,30 +346,34 @@ class InquiryKPIServices:
         with transaction.atomic():
             # Recalculate quote metrics if quoted
             if inquiry.quoted_at and inquiry.created_at:
-                quote_time = get_business_hours_between(inquiry.created_at, inquiry.quoted_at)
+                quote_time = get_business_hours_between(
+                    inquiry.created_at, inquiry.quoted_at
+                )
                 quote_grade = calculate_quote_grade(quote_time)
 
                 if inquiry.quote_time != quote_time:
                     inquiry.quote_time = quote_time
-                    update_fields.append('quote_time')
+                    update_fields.append("quote_time")
 
                 if inquiry.quote_grade != quote_grade:
                     inquiry.quote_grade = quote_grade
-                    update_fields.append('quote_grade')
+                    update_fields.append("quote_grade")
 
             # Recalculate completion metrics if completed
             completion_timestamp = inquiry.success_at or inquiry.failed_at
             if completion_timestamp and inquiry.quoted_at:
-                resolution_time = get_business_hours_between(inquiry.quoted_at, completion_timestamp)
+                resolution_time = get_business_hours_between(
+                    inquiry.quoted_at, completion_timestamp
+                )
                 completion_grade = calculate_completion_grade(resolution_time)
 
                 if inquiry.resolution_time != resolution_time:
                     inquiry.resolution_time = resolution_time
-                    update_fields.append('resolution_time')
+                    update_fields.append("resolution_time")
 
                 if inquiry.completion_grade != completion_grade:
                     inquiry.completion_grade = completion_grade
-                    update_fields.append('completion_grade')
+                    update_fields.append("completion_grade")
 
             # Save only if there are changes
             if update_fields:
@@ -356,7 +386,7 @@ class InquiryKPIServices:
         """Lock inquiry to prevent KPI recalculation"""
         if not inquiry.is_locked:
             inquiry.is_locked = True
-            inquiry.save(update_fields=['is_locked'])
+            inquiry.save(update_fields=["is_locked"])
         return inquiry
 
     @staticmethod
@@ -364,15 +394,17 @@ class InquiryKPIServices:
         """Unlock inquiry to allow KPI recalculation"""
         if inquiry.is_locked:
             inquiry.is_locked = False
-            inquiry.save(update_fields=['is_locked'])
+            inquiry.save(update_fields=["is_locked"])
         return inquiry
 
     @staticmethod
-    def set_auto_completion(*, inquiry: Inquiry, auto_completion: bool = True) -> Inquiry:
+    def set_auto_completion(
+        *, inquiry: Inquiry, auto_completion: bool = True
+    ) -> Inquiry:
         """Set auto-completion flag to skip automatic KPI calculations"""
         if inquiry.auto_completion != auto_completion:
             inquiry.auto_completion = auto_completion
-            inquiry.save(update_fields=['auto_completion'])
+            inquiry.save(update_fields=["auto_completion"])
         return inquiry
 
 
@@ -408,7 +440,7 @@ class KPIWeightsServices:
         follow_up_weight: float,
         conversion_rate_weight: float,
         new_customer_weight: float,
-        created_by: 'CustomUser' = None
+        created_by: "CustomUser" = None,
     ) -> KPIWeights:
         """
         Create new KPI weights configuration (replaces existing)
@@ -432,7 +464,7 @@ class KPIWeightsServices:
                 follow_up_weight=follow_up_weight,
                 conversion_rate_weight=conversion_rate_weight,
                 new_customer_weight=new_customer_weight,
-                created_by=created_by
+                created_by=created_by,
             )
 
             # This will trigger validation and replace existing configuration
@@ -448,7 +480,7 @@ class KPIWeightsServices:
         response_time_weight: float = None,
         follow_up_weight: float = None,
         conversion_rate_weight: float = None,
-        new_customer_weight: float = None
+        new_customer_weight: float = None,
     ) -> KPIWeights:
         """
         Update existing KPI weights configuration
@@ -467,19 +499,19 @@ class KPIWeightsServices:
 
         if response_time_weight is not None:
             weights_instance.response_time_weight = response_time_weight
-            update_fields.append('response_time_weight')
+            update_fields.append("response_time_weight")
 
         if follow_up_weight is not None:
             weights_instance.follow_up_weight = follow_up_weight
-            update_fields.append('follow_up_weight')
+            update_fields.append("follow_up_weight")
 
         if conversion_rate_weight is not None:
             weights_instance.conversion_rate_weight = conversion_rate_weight
-            update_fields.append('conversion_rate_weight')
+            update_fields.append("conversion_rate_weight")
 
         if new_customer_weight is not None:
             weights_instance.new_customer_weight = new_customer_weight
-            update_fields.append('new_customer_weight')
+            update_fields.append("new_customer_weight")
 
         if update_fields:
             with transaction.atomic():
@@ -488,7 +520,6 @@ class KPIWeightsServices:
                 weights_instance.save(update_fields=update_fields)
 
         return weights_instance
-
 
     @staticmethod
     def delete_weights_configuration(*, weights_instance: KPIWeights) -> None:
@@ -507,7 +538,7 @@ class KPIWeightsServices:
         follow_up_percentage: float,
         conversion_rate: float,
         new_customer_percentage: float,
-        weights: dict = None
+        weights: dict = None,
     ) -> float:
         """
         Calculate weighted KPI score using current or provided weights
@@ -527,10 +558,10 @@ class KPIWeightsServices:
 
         # Calculate weighted score
         weighted_score = (
-            (response_time_percentage * weights['response_time_weight'] / 100) +
-            (follow_up_percentage * weights['follow_up_weight'] / 100) +
-            (conversion_rate * weights['conversion_rate_weight'] / 100) +
-            (new_customer_percentage * weights['new_customer_weight'] / 100)
+            (response_time_percentage * weights["response_time_weight"] / 100)
+            + (follow_up_percentage * weights["follow_up_weight"] / 100)
+            + (conversion_rate * weights["conversion_rate_weight"] / 100)
+            + (new_customer_percentage * weights["new_customer_weight"] / 100)
         )
 
         return round(weighted_score, 2)
@@ -546,7 +577,7 @@ class PerformanceTargetServices:
         *,
         manager_id: int,
         date_from: timezone.datetime = None,
-        date_to: timezone.datetime = None
+        date_to: timezone.datetime = None,
     ) -> dict:
         """
         Calculate manager's performance grade based on volume and targets
@@ -582,9 +613,7 @@ class PerformanceTargetServices:
 
         # Get inquiry count for the manager in the period
         inquiry_count = InquirySelectors.get_manager_inquiry_count(
-            manager_id=manager_id,
-            date_from=date_from,
-            date_to=date_to
+            manager_id=manager_id, date_from=date_from, date_to=date_to
         )
 
         # Find applicable target configuration
@@ -593,71 +622,68 @@ class PerformanceTargetServices:
         if not target:
             # No target configured - return default values
             return {
-                'grade': 'unknown',
-                'performance': 0.0,
-                'inquiry_count': inquiry_count,
-                'target_bracket': 'not_configured',
-                'thresholds': {},
-                'target_info': None,
-                'error': 'No target configuration found for this volume'
+                "grade": "unknown",
+                "performance": 0.0,
+                "inquiry_count": inquiry_count,
+                "target_bracket": "not_configured",
+                "thresholds": {},
+                "target_info": None,
+                "error": "No target configuration found for this volume",
             }
 
         # Get manager's KPI statistics
         manager_stats = InquirySelectors.get_manager_kpi_statistics(
-            manager_id=manager_id,
-            date_from=date_from,
-            date_to=date_to
+            manager_id=manager_id, date_from=date_from, date_to=date_to
         )
 
         # Calculate overall performance using existing KPI logic
         overall_performance = 0.0
-        if manager_stats and manager_stats.get('total_inquiries', 0) > 0:
+        if manager_stats and manager_stats.get("total_inquiries", 0) > 0:
             # Calculate performance percentages similar to dashboard logic
             # Response time percentage (quote efficiency)
-            max_quote_points = manager_stats['total_inquiries'] * 3
+            max_quote_points = manager_stats["total_inquiries"] * 3
             response_time_percentage = (
-                (manager_stats['total_quote_points'] / max_quote_points * 100)
-                if max_quote_points > 0 else 0.0
+                (manager_stats["total_quote_points"] / max_quote_points * 100)
+                if max_quote_points > 0
+                else 0.0
             )
 
             # Follow-up percentage (completion efficiency)
-            max_completion_points = manager_stats['completed_inquiries'] * 3
+            max_completion_points = manager_stats["completed_inquiries"] * 3
             follow_up_percentage = (
-                (manager_stats['total_completion_points'] / max_completion_points * 100)
-                if max_completion_points > 0 else 0.0
+                (manager_stats["total_completion_points"] / max_completion_points * 100)
+                if max_completion_points > 0
+                else 0.0
             )
 
             # Get weighted overall performance
             overall_performance = KPIWeightsServices.calculate_weighted_kpi_score(
                 response_time_percentage=response_time_percentage,
                 follow_up_percentage=follow_up_percentage,
-                conversion_rate=manager_stats['conversion_rate'],
-                new_customer_percentage=manager_stats['lead_generation_rate']
+                conversion_rate=manager_stats["conversion_rate"],
+                new_customer_percentage=manager_stats["lead_generation_rate"],
             )
 
         # Determine grade based on performance and target thresholds
         grade = target.get_grade_for_performance(overall_performance)
 
         return {
-            'grade': grade,
-            'performance': overall_performance,
-            'inquiry_count': inquiry_count,
-            'target_bracket': target.volume_display,
-            'excellent_threshold': target.excellent_threshold,
-            'target_info': {
-                'id': target.id,
-                'min_inquiries': target.min_inquiries,
-                'max_inquiries': target.max_inquiries,
-                'is_active': target.is_active,
-            }
+            "grade": grade,
+            "performance": overall_performance,
+            "inquiry_count": inquiry_count,
+            "target_bracket": target.volume_display,
+            "excellent_threshold": target.excellent_threshold,
+            "target_info": {
+                "id": target.id,
+                "min_inquiries": target.min_inquiries,
+                "max_inquiries": target.max_inquiries,
+                "is_active": target.is_active,
+            },
         }
 
     @staticmethod
     def create_target(
-        *,
-        min_inquiries: int,
-        max_inquiries: int = None,
-        excellent_threshold: float
+        *, min_inquiries: int, max_inquiries: int = None, excellent_threshold: float
     ) -> PerformanceTarget:
         """
         Create a new performance target configuration
@@ -676,7 +702,7 @@ class PerformanceTargetServices:
         target = PerformanceTarget(
             min_inquiries=min_inquiries,
             max_inquiries=max_inquiries,
-            excellent_threshold=excellent_threshold
+            excellent_threshold=excellent_threshold,
         )
 
         # This will trigger validation
@@ -692,7 +718,7 @@ class PerformanceTargetServices:
         min_inquiries: int = None,
         max_inquiries: int = None,
         excellent_threshold: float = None,
-        is_active: bool = None
+        is_active: bool = None,
     ) -> PerformanceTarget:
         """
         Update existing performance target configuration
@@ -717,24 +743,24 @@ class PerformanceTargetServices:
 
         if min_inquiries is not None:
             target.min_inquiries = min_inquiries
-            update_fields.append('min_inquiries')
+            update_fields.append("min_inquiries")
 
         if max_inquiries is not None:
             target.max_inquiries = max_inquiries
-            update_fields.append('max_inquiries')
+            update_fields.append("max_inquiries")
 
         if excellent_threshold is not None:
             target.excellent_threshold = excellent_threshold
-            update_fields.append('excellent_threshold')
+            update_fields.append("excellent_threshold")
 
         if is_active is not None:
             target.is_active = is_active
-            update_fields.append('is_active')
+            update_fields.append("is_active")
 
         if update_fields:
             # This will trigger validation
             target.full_clean()
-            target.save(update_fields=update_fields + ['updated_at'])
+            target.save(update_fields=update_fields + ["updated_at"])
 
         return target
 
@@ -777,14 +803,14 @@ class PerformanceTargetServices:
 
             # Step 2: Process each target
             for target_data in targets_data:
-                target_id = target_data.get('id')
+                target_id = target_data.get("id")
 
                 # Map frontend field names to model field names
                 model_data = {
-                    'min_inquiries': target_data.get('min_inquiries'),
-                    'max_inquiries': target_data.get('max_inquiries'),
-                    'excellent_threshold': target_data.get('excellent_kpi'),
-                    'is_active': target_data.get('is_active', True),
+                    "min_inquiries": target_data.get("min_inquiries"),
+                    "max_inquiries": target_data.get("max_inquiries"),
+                    "excellent_threshold": target_data.get("excellent_kpi"),
+                    "is_active": target_data.get("is_active", True),
                 }
 
                 # Remove None values
@@ -793,18 +819,22 @@ class PerformanceTargetServices:
                 if target_id:
                     # Update existing target
                     target = PerformanceTargetServices.update_target(
-                        target_id=target_id,
-                        **model_data
+                        target_id=target_id, **model_data
                     )
                 else:
                     # Create new target - extract is_active for separate handling
-                    create_data = {k: v for k, v in model_data.items() if k != 'is_active'}
+                    create_data = {
+                        k: v for k, v in model_data.items() if k != "is_active"
+                    }
                     target = PerformanceTargetServices.create_target(**create_data)
 
                     # Handle is_active separately for new targets
-                    if 'is_active' in model_data and model_data['is_active'] != target.is_active:
-                        target.is_active = model_data['is_active']
-                        target.save(update_fields=['is_active'])
+                    if (
+                        "is_active" in model_data
+                        and model_data["is_active"] != target.is_active
+                    ):
+                        target.is_active = model_data["is_active"]
+                        target.save(update_fields=["is_active"])
 
                 results.append(target)
 
@@ -830,30 +860,33 @@ class PerformanceTargetServices:
         ranges = []
         for i, data in enumerate(targets_data):
             try:
-                min_val = data.get('min_inquiries')
-                max_val = data.get('max_inquiries')
+                min_val = data.get("min_inquiries")
+                max_val = data.get("max_inquiries")
 
                 if min_val is None:
-                    raise ValidationError(f"Item {i+1}: min_inquiries is required")
+                    raise ValidationError(f"Item {i + 1}: min_inquiries is required")
 
                 if min_val < 0:
-                    raise ValidationError(f"Item {i+1}: min_inquiries cannot be negative")
+                    raise ValidationError(
+                        f"Item {i + 1}: min_inquiries cannot be negative"
+                    )
 
                 if max_val is not None and max_val < min_val:
-                    raise ValidationError(f"Item {i+1}: max_inquiries must be >= min_inquiries")
+                    raise ValidationError(
+                        f"Item {i + 1}: max_inquiries must be >= min_inquiries"
+                    )
 
-                ranges.append({
-                    'index': i,
-                    'min': min_val,
-                    'max': max_val,
-                    'id': data.get('id')
-                })
+                ranges.append(
+                    {"index": i, "min": min_val, "max": max_val, "id": data.get("id")}
+                )
 
             except (TypeError, ValueError) as e:
-                raise ValidationError(f"Item {i+1}: Invalid numeric values - {str(e)}")
+                raise ValidationError(
+                    f"Item {i + 1}: Invalid numeric values - {str(e)}"
+                )
 
         # Sort ranges by min_inquiries for validation
-        ranges.sort(key=lambda x: x['min'])
+        ranges.sort(key=lambda x: x["min"])
 
         # Check for overlaps within the submitted data
         for i in range(len(ranges)):
@@ -862,15 +895,22 @@ class PerformanceTargetServices:
                 range2 = ranges[j]
 
                 if PerformanceTargetServices._ranges_overlap_validation(
-                    range1['min'], range1['max'],
-                    range2['min'], range2['max']
+                    range1["min"], range1["max"], range2["min"], range2["max"]
                 ):
-                    range1_display = f"{range1['min']}-{range1['max']}" if range1['max'] else f"{range1['min']}+"
-                    range2_display = f"{range2['min']}-{range2['max']}" if range2['max'] else f"{range2['min']}+"
+                    range1_display = (
+                        f"{range1['min']}-{range1['max']}"
+                        if range1["max"]
+                        else f"{range1['min']}+"
+                    )
+                    range2_display = (
+                        f"{range2['min']}-{range2['max']}"
+                        if range2["max"]
+                        else f"{range2['min']}+"
+                    )
 
                     raise ValidationError(
-                        f"Target ranges overlap: {range1_display} (item {range1['index']+1}) "
-                        f"and {range2_display} (item {range2['index']+1}). "
+                        f"Target ranges overlap: {range1_display} (item {range1['index'] + 1}) "
+                        f"and {range2_display} (item {range2['index'] + 1}). "
                         "Target ranges cannot overlap."
                     )
 
@@ -933,9 +973,9 @@ class PerformanceTargetServices:
             return
 
         # Check if first range starts at 0
-        if ranges[0]['min'] > 0:
+        if ranges[0]["min"] > 0:
             raise ValidationError(
-                f"Coverage gap: No target defined for 0-{ranges[0]['min']-1} inquiries. "
+                f"Coverage gap: No target defined for 0-{ranges[0]['min'] - 1} inquiries. "
                 "First target should start at 0."
             )
 
@@ -944,7 +984,7 @@ class PerformanceTargetServices:
             current_range = ranges[i]
             next_range = ranges[i + 1]
 
-            if current_range['max'] is None:
+            if current_range["max"] is None:
                 # Current range is unlimited, so no more ranges should follow
                 raise ValidationError(
                     f"Invalid configuration: Range {current_range['min']}+ is unlimited "
@@ -952,9 +992,9 @@ class PerformanceTargetServices:
                 )
 
             # Check for gap between current max and next min
-            if current_range['max'] + 1 < next_range['min']:
-                gap_start = current_range['max'] + 1
-                gap_end = next_range['min'] - 1
+            if current_range["max"] + 1 < next_range["min"]:
+                gap_start = current_range["max"] + 1
+                gap_end = next_range["min"] - 1
                 raise ValidationError(
                     f"Coverage gap: No target defined for {gap_start}-{gap_end} inquiries. "
                     f"Gap between range {current_range['min']}-{current_range['max']} "
@@ -963,7 +1003,7 @@ class PerformanceTargetServices:
 
         # Check if the last range covers infinity
         last_range = ranges[-1]
-        if last_range['max'] is not None:
+        if last_range["max"] is not None:
             raise ValidationError(
                 f"Coverage incomplete: Last range {last_range['min']}-{last_range['max']} "
                 "should be unlimited (no max_inquiries) to cover all higher volumes."
@@ -991,8 +1031,7 @@ class PerformanceTargetServices:
             Updated PerformanceTarget instance
         """
         return PerformanceTargetServices.update_target(
-            target_id=target_id,
-            is_active=True
+            target_id=target_id, is_active=True
         )
 
     @staticmethod
@@ -1007,6 +1046,5 @@ class PerformanceTargetServices:
             Updated PerformanceTarget instance
         """
         return PerformanceTargetServices.update_target(
-            target_id=target_id,
-            is_active=False
+            target_id=target_id, is_active=False
         )

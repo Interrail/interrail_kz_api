@@ -16,7 +16,9 @@ def validate_file_size(value):
     """Validate file size limit (10MB)"""
     max_size = 10 * 1024 * 1024  # 10MB
     if value.size > max_size:
-        raise ValidationError(f"File too large. Maximum size is {max_size / (1024 * 1024):.0f}MB")
+        raise ValidationError(
+            f"File too large. Maximum size is {max_size / (1024 * 1024):.0f}MB"
+        )
 
 
 class Inquiry(TimeStampModel):
@@ -55,13 +57,23 @@ class Inquiry(TimeStampModel):
     is_new_customer = models.BooleanField(default=False)
 
     # KPI Tracking Fields
-    quoted_at = models.DateTimeField(null=True, blank=True, help_text="When inquiry was quoted")
-    success_at = models.DateTimeField(null=True, blank=True, help_text="When inquiry was successful")
-    failed_at = models.DateTimeField(null=True, blank=True, help_text="When inquiry failed")
+    quoted_at = models.DateTimeField(
+        null=True, blank=True, help_text="When inquiry was quoted"
+    )
+    success_at = models.DateTimeField(
+        null=True, blank=True, help_text="When inquiry was successful"
+    )
+    failed_at = models.DateTimeField(
+        null=True, blank=True, help_text="When inquiry failed"
+    )
 
     # KPI Durations (calculated automatically)
-    quote_time = models.DurationField(default=timedelta(), help_text="Business hours from creation to quote")
-    resolution_time = models.DurationField(default=timedelta(), help_text="Business hours from quote to resolution")
+    quote_time = models.DurationField(
+        default=timedelta(), help_text="Business hours from creation to quote"
+    )
+    resolution_time = models.DurationField(
+        default=timedelta(), help_text="Business hours from quote to resolution"
+    )
 
     # KPI Grades (calculated automatically)
     quote_grade = models.CharField(
@@ -69,24 +81,22 @@ class Inquiry(TimeStampModel):
         choices=GRADE_CHOICES,
         null=True,
         blank=True,
-        help_text="Response time grade: A (≤60hrs), B (≤84hrs), C (>84hrs)"
+        help_text="Response time grade: A (≤60hrs), B (≤84hrs), C (>84hrs)",
     )
     completion_grade = models.CharField(
         max_length=1,
         choices=GRADE_CHOICES,
         null=True,
         blank=True,
-        help_text="Completion time grade: A (≤120hrs), B (≤168hrs), C (>168hrs)"
+        help_text="Completion time grade: A (≤120hrs), B (≤168hrs), C (>168hrs)",
     )
 
     # KPI Control Fields
     auto_completion = models.BooleanField(
-        default=False,
-        help_text="Skip automatic KPI calculation for this inquiry"
+        default=False, help_text="Skip automatic KPI calculation for this inquiry"
     )
     is_locked = models.BooleanField(
-        default=False,
-        help_text="Lock inquiry from KPI recalculation"
+        default=False, help_text="Lock inquiry from KPI recalculation"
     )
 
     class Meta:
@@ -139,42 +149,49 @@ class Inquiry(TimeStampModel):
     def quote(self, quoted_at: timezone.datetime = None) -> None:
         """Mark inquiry as quoted and calculate KPI metrics"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.quote_inquiry(inquiry=self, quoted_at=quoted_at)
         self.refresh_from_db()
 
     def mark_success(self, success_at: timezone.datetime = None) -> None:
         """Mark inquiry as successful and calculate KPI metrics"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.complete_inquiry_success(inquiry=self, success_at=success_at)
         self.refresh_from_db()
 
     def mark_failed(self, failed_at: timezone.datetime = None) -> None:
         """Mark inquiry as failed and calculate KPI metrics"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.complete_inquiry_failed(inquiry=self, failed_at=failed_at)
         self.refresh_from_db()
 
     def recalculate_kpi(self, force: bool = False) -> None:
         """Recalculate KPI metrics for this inquiry"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.recalculate_kpi_metrics(inquiry=self, force=force)
         self.refresh_from_db()
 
     def lock_kpi(self) -> None:
         """Lock inquiry from KPI recalculation"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.lock_inquiry_kpi(inquiry=self)
         self.refresh_from_db()
 
     def unlock_kpi(self) -> None:
         """Unlock inquiry to allow KPI recalculation"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.unlock_inquiry_kpi(inquiry=self)
         self.refresh_from_db()
 
     def set_auto_completion(self, enabled: bool = True) -> None:
         """Enable/disable auto-completion to skip KPI calculations"""
         from .services import InquiryKPIServices
+
         InquiryKPIServices.set_auto_completion(inquiry=self, auto_completion=enabled)
         self.refresh_from_db()
 
@@ -182,12 +199,14 @@ class Inquiry(TimeStampModel):
     def kpi_quote_points(self) -> int:
         """Get KPI points for quote grade"""
         from .utils import get_grade_points
+
         return get_grade_points(self.quote_grade)
 
     @property
     def kpi_completion_points(self) -> int:
         """Get KPI points for completion grade"""
         from .utils import get_grade_points
+
         return get_grade_points(self.completion_grade)
 
     @property
@@ -250,9 +269,8 @@ def update_inquiry_kpi_on_status_change(sender, instance, **kwargs):
     current_time = timezone.now()
 
     # Handle status change from pending to quoted
-    if (
-        instance.status == "quoted" and
-        (old_instance is None or old_instance.status != "quoted")
+    if instance.status == "quoted" and (
+        old_instance is None or old_instance.status != "quoted"
     ):
         # Set quoted timestamp if not already set
         if not instance.quoted_at:
@@ -266,9 +284,8 @@ def update_inquiry_kpi_on_status_change(sender, instance, **kwargs):
             instance.quote_grade = calculate_quote_grade(instance.quote_time)
 
     # Handle status change from quoted to success
-    elif (
-        instance.status == "success" and
-        (old_instance is None or old_instance.status != "success")
+    elif instance.status == "success" and (
+        old_instance is None or old_instance.status != "success"
     ):
         # Set success timestamp if not already set
         if not instance.success_at:
@@ -279,15 +296,16 @@ def update_inquiry_kpi_on_status_change(sender, instance, **kwargs):
             instance.resolution_time = get_business_hours_between(
                 instance.quoted_at, instance.success_at
             )
-            instance.completion_grade = calculate_completion_grade(instance.resolution_time)
+            instance.completion_grade = calculate_completion_grade(
+                instance.resolution_time
+            )
 
         # Clear failed_at if previously set
         instance.failed_at = None
 
     # Handle status change from quoted to failed
-    elif (
-        instance.status == "failed" and
-        (old_instance is None or old_instance.status != "failed")
+    elif instance.status == "failed" and (
+        old_instance is None or old_instance.status != "failed"
     ):
         # Set failed timestamp if not already set
         if not instance.failed_at:
@@ -298,7 +316,9 @@ def update_inquiry_kpi_on_status_change(sender, instance, **kwargs):
             instance.resolution_time = get_business_hours_between(
                 instance.quoted_at, instance.failed_at
             )
-            instance.completion_grade = calculate_completion_grade(instance.resolution_time)
+            instance.completion_grade = calculate_completion_grade(
+                instance.resolution_time
+            )
 
         # Clear success_at if previously set
         instance.success_at = None
@@ -326,36 +346,40 @@ def finalize_inquiry_kpi_calculation(sender, instance, created, **kwargs):
         update_fields = []
 
         # Handle directly created quoted inquiry
-        if instance.status == "quoted" and not instance.quote_grade and instance.created_at:
+        if (
+            instance.status == "quoted"
+            and not instance.quote_grade
+            and instance.created_at
+        ):
             if not instance.quoted_at:
                 instance.quoted_at = instance.created_at
-                update_fields.append('quoted_at')
+                update_fields.append("quoted_at")
 
             instance.quote_time = get_business_hours_between(
                 instance.created_at, instance.quoted_at
             )
             instance.quote_grade = calculate_quote_grade(instance.quote_time)
-            update_fields.extend(['quote_time', 'quote_grade'])
+            update_fields.extend(["quote_time", "quote_grade"])
             needs_update = True
 
         # Handle directly created completed inquiry
         elif instance.status in ["success", "failed"] and not instance.completion_grade:
             if instance.status == "success" and not instance.success_at:
                 instance.success_at = instance.created_at
-                update_fields.append('success_at')
+                update_fields.append("success_at")
             elif instance.status == "failed" and not instance.failed_at:
                 instance.failed_at = instance.created_at
-                update_fields.append('failed_at')
+                update_fields.append("failed_at")
 
             # Ensure quote data exists
             if not instance.quoted_at:
                 instance.quoted_at = instance.created_at
-                update_fields.append('quoted_at')
+                update_fields.append("quoted_at")
 
             if not instance.quote_grade:
                 instance.quote_time = timedelta()  # Same day quote
                 instance.quote_grade = calculate_quote_grade(instance.quote_time)
-                update_fields.extend(['quote_time', 'quote_grade'])
+                update_fields.extend(["quote_time", "quote_grade"])
 
             # Calculate completion metrics
             completion_timestamp = instance.success_at or instance.failed_at
@@ -363,15 +387,17 @@ def finalize_inquiry_kpi_calculation(sender, instance, created, **kwargs):
                 instance.resolution_time = get_business_hours_between(
                     instance.quoted_at, completion_timestamp
                 )
-                instance.completion_grade = calculate_completion_grade(instance.resolution_time)
-                update_fields.extend(['resolution_time', 'completion_grade'])
+                instance.completion_grade = calculate_completion_grade(
+                    instance.resolution_time
+                )
+                update_fields.extend(["resolution_time", "completion_grade"])
                 needs_update = True
 
         # Update if needed (avoid infinite recursion with update_fields)
         if needs_update and update_fields:
-            Inquiry.objects.filter(pk=instance.pk).update(**{
-                field: getattr(instance, field) for field in update_fields
-            })
+            Inquiry.objects.filter(pk=instance.pk).update(
+                **{field: getattr(instance, field) for field in update_fields}
+            )
 
 
 class KPIWeights(TimeStampModel):
@@ -385,25 +411,25 @@ class KPIWeights(TimeStampModel):
         max_digits=5,
         decimal_places=2,
         default=25.00,
-        help_text="Weight for response time KPI (quote efficiency). Value in percentage."
+        help_text="Weight for response time KPI (quote efficiency). Value in percentage.",
     )
     follow_up_weight = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=25.00,
-        help_text="Weight for follow-up KPI (completion efficiency). Value in percentage."
+        help_text="Weight for follow-up KPI (completion efficiency). Value in percentage.",
     )
     conversion_rate_weight = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=25.00,
-        help_text="Weight for conversion rate KPI (success rate). Value in percentage."
+        help_text="Weight for conversion rate KPI (success rate). Value in percentage.",
     )
     new_customer_weight = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=25.00,
-        help_text="Weight for new customer acquisition KPI. Value in percentage."
+        help_text="Weight for new customer acquisition KPI. Value in percentage.",
     )
 
     # Metadata
@@ -412,7 +438,7 @@ class KPIWeights(TimeStampModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="User who created this configuration"
+        help_text="User who created this configuration",
     )
 
     class Meta:
@@ -428,7 +454,7 @@ class KPIWeights(TimeStampModel):
             self.response_time_weight,
             self.follow_up_weight,
             self.conversion_rate_weight,
-            self.new_customer_weight
+            self.new_customer_weight,
         ]
 
         # Ensure all weights are positive
@@ -464,10 +490,10 @@ class KPIWeights(TimeStampModel):
     def get_default_weights(cls):
         """Get default weights if no active configuration exists"""
         return {
-            'response_time_weight': 25.00,
-            'follow_up_weight': 25.00,
-            'conversion_rate_weight': 25.00,
-            'new_customer_weight': 25.00
+            "response_time_weight": 25.00,
+            "follow_up_weight": 25.00,
+            "conversion_rate_weight": 25.00,
+            "new_customer_weight": 25.00,
         }
 
     @classmethod
@@ -476,30 +502,30 @@ class KPIWeights(TimeStampModel):
         current_weights = cls.get_current_weights()
         if current_weights:
             return {
-                'response_time_weight': float(current_weights.response_time_weight),
-                'follow_up_weight': float(current_weights.follow_up_weight),
-                'conversion_rate_weight': float(current_weights.conversion_rate_weight),
-                'new_customer_weight': float(current_weights.new_customer_weight)
+                "response_time_weight": float(current_weights.response_time_weight),
+                "follow_up_weight": float(current_weights.follow_up_weight),
+                "conversion_rate_weight": float(current_weights.conversion_rate_weight),
+                "new_customer_weight": float(current_weights.new_customer_weight),
             }
         return cls.get_default_weights()
 
     def get_weights_dict(self):
         """Get this instance's weights as dictionary"""
         return {
-            'response_time_weight': float(self.response_time_weight),
-            'follow_up_weight': float(self.follow_up_weight),
-            'conversion_rate_weight': float(self.conversion_rate_weight),
-            'new_customer_weight': float(self.new_customer_weight)
+            "response_time_weight": float(self.response_time_weight),
+            "follow_up_weight": float(self.follow_up_weight),
+            "conversion_rate_weight": float(self.conversion_rate_weight),
+            "new_customer_weight": float(self.new_customer_weight),
         }
 
     @property
     def total_weight(self):
         """Calculate total weight percentage"""
         return (
-            self.response_time_weight +
-            self.follow_up_weight +
-            self.conversion_rate_weight +
-            self.new_customer_weight
+            self.response_time_weight
+            + self.follow_up_weight
+            + self.conversion_rate_weight
+            + self.new_customer_weight
         )
 
 
@@ -515,8 +541,8 @@ class PerformanceTarget(TimeStampModel):
     """
 
     GRADE_CHOICES = (
-        ('excellent', 'Excellent'),
-        ('average', 'Average'),
+        ("excellent", "Excellent"),
+        ("average", "Average"),
     )
 
     # Volume bracket definition
@@ -526,7 +552,7 @@ class PerformanceTarget(TimeStampModel):
     max_inquiries = models.IntegerField(
         null=True,
         blank=True,
-        help_text="Maximum inquiries in bracket (inclusive). Leave null for unlimited."
+        help_text="Maximum inquiries in bracket (inclusive). Leave null for unlimited.",
     )
 
     # Performance threshold (as percentage)
@@ -535,17 +561,16 @@ class PerformanceTarget(TimeStampModel):
     )
 
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this target configuration is active"
+        default=True, help_text="Whether this target configuration is active"
     )
 
     class Meta:
         verbose_name = "Performance Target"
         verbose_name_plural = "Performance Targets"
-        ordering = ['min_inquiries']
+        ordering = ["min_inquiries"]
         indexes = [
-            models.Index(fields=['is_active']),
-            models.Index(fields=['min_inquiries']),
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["min_inquiries"]),
         ]
 
     def clean(self):
@@ -558,7 +583,9 @@ class PerformanceTarget(TimeStampModel):
 
         # Validate volume bracket
         if self.max_inquiries is not None and self.max_inquiries < self.min_inquiries:
-            raise ValidationError("max_inquiries must be greater than or equal to min_inquiries")
+            raise ValidationError(
+                "max_inquiries must be greater than or equal to min_inquiries"
+            )
 
         # Validate minimum inquiries is not negative
         if self.min_inquiries < 0:
@@ -584,7 +611,9 @@ class PerformanceTarget(TimeStampModel):
             # Check if ranges overlap
             if self._ranges_overlap(current_min, current_max, other_min, other_max):
                 other_range = target.volume_display
-                current_range = f"{current_min}-{current_max}" if current_max else f"{current_min}+"
+                current_range = (
+                    f"{current_min}-{current_max}" if current_max else f"{current_min}+"
+                )
                 raise ValidationError(
                     f"Volume range {current_range} overlaps with existing target range {other_range}. "
                     "Target ranges cannot overlap."
@@ -648,9 +677,9 @@ class PerformanceTarget(TimeStampModel):
             str: Grade ('excellent' or 'average')
         """
         if performance_percentage >= self.excellent_threshold:
-            return 'excellent'
+            return "excellent"
         else:
-            return 'average'
+            return "average"
 
     def __str__(self):
         if self.max_inquiries is None:
@@ -679,7 +708,7 @@ class PerformanceTarget(TimeStampModel):
         Returns:
             PerformanceTarget or None: Matching active target configuration
         """
-        targets = cls.objects.filter(is_active=True).order_by('min_inquiries')
+        targets = cls.objects.filter(is_active=True).order_by("min_inquiries")
 
         for target in targets:
             if target.applies_to_volume(inquiry_count):
@@ -701,24 +730,24 @@ class PerformanceTarget(TimeStampModel):
 
         default_configs = [
             {
-                'min_inquiries': 0,
-                'max_inquiries': 30,
-                'excellent_threshold': 90.0,
+                "min_inquiries": 0,
+                "max_inquiries": 30,
+                "excellent_threshold": 90.0,
             },
             {
-                'min_inquiries': 31,
-                'max_inquiries': 60,
-                'excellent_threshold': 85.0,
+                "min_inquiries": 31,
+                "max_inquiries": 60,
+                "excellent_threshold": 85.0,
             },
             {
-                'min_inquiries': 61,
-                'max_inquiries': 100,
-                'excellent_threshold': 80.0,
+                "min_inquiries": 61,
+                "max_inquiries": 100,
+                "excellent_threshold": 80.0,
             },
             {
-                'min_inquiries': 101,
-                'max_inquiries': None,  # Unlimited
-                'excellent_threshold': 75.0,
+                "min_inquiries": 101,
+                "max_inquiries": None,  # Unlimited
+                "excellent_threshold": 75.0,
             },
         ]
 

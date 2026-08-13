@@ -35,26 +35,24 @@ class AttachmentField(serializers.Field):
 
     def to_internal_value(self, data):
         # Handle file uploads (multipart requests)
-        if hasattr(data, 'read'):
+        if hasattr(data, "read"):
             return data
 
         # Handle string commands (JSON requests)
         if isinstance(data, str):
-            if data == 'DELETE':
+            if data == "DELETE":
                 return None  # Signal for deletion
-            elif data == '':
+            elif data == "":
                 return ...  # Signal for no change (ellipsis)
             else:
                 raise serializers.ValidationError(
                     "Invalid value. Use 'DELETE' to remove attachment or upload a file."
                 )
 
-        raise serializers.ValidationError(
-            "Must be a file or 'DELETE' string."
-        )
+        raise serializers.ValidationError("Must be a file or 'DELETE' string.")
 
     def to_representation(self, value):
-        if hasattr(value, 'url'):
+        if hasattr(value, "url"):
             return value.url
         return str(value) if value else None
 
@@ -120,7 +118,9 @@ class InquiryListApiView(APIView):
         attachment_url = serializers.SerializerMethodField()
         attachment_name = serializers.SerializerMethodField()
         has_attachment = serializers.SerializerMethodField()
-        status_display = serializers.CharField(source='get_status_display', read_only=True)
+        status_display = serializers.CharField(
+            source="get_status_display", read_only=True
+        )
         sales_manager = inline_serializer(
             fields={
                 "id": serializers.IntegerField(read_only=True),
@@ -133,16 +133,25 @@ class InquiryListApiView(APIView):
         class Meta:
             model = Inquiry
             fields = [
-                'id', 'client', 'text', 'attachment_url', 'attachment_name',
-                'has_attachment', 'status', 'status_display', 'sales_manager',
-                'is_new_customer', 'created_at', 'updated_at'
+                "id",
+                "client",
+                "text",
+                "attachment_url",
+                "attachment_name",
+                "has_attachment",
+                "status",
+                "status_display",
+                "sales_manager",
+                "is_new_customer",
+                "created_at",
+                "updated_at",
             ]
 
         def get_attachment_url(self, obj):
             return obj.attachment.url if obj.attachment else None
 
         def get_attachment_name(self, obj):
-            return obj.attachment.name.split('/')[-1] if obj.attachment else None
+            return obj.attachment.name.split("/")[-1] if obj.attachment else None
 
         def get_has_attachment(self, obj):
             return bool(obj.attachment)
@@ -223,8 +232,14 @@ class InquiryExportApiView(APIView):
     FilterSerializer = InquiryListApiView.FilterSerializer
 
     EXPORT_COLUMNS = [
-        "ID", "Sales Manager", "Client", "Status",
-        "New Customer", "Text", "File", "Created At",
+        "ID",
+        "Sales Manager",
+        "Client",
+        "Status",
+        "New Customer",
+        "Text",
+        "File",
+        "Created At",
     ]
 
     @extend_schema(
@@ -253,8 +268,7 @@ class InquiryExportApiView(APIView):
         response = HttpResponse(
             buffer.getvalue(),
             content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             ),
         )
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -299,8 +313,6 @@ class InquiryCreateApiView(APIView):
         comment = serializers.CharField(required=False, allow_blank=True)
         sales_manager_id = serializers.IntegerField(required=True)
         is_new_customer = serializers.BooleanField(default=False)
-
-
 
     class InquiryCreateOutputSerializer(serializers.Serializer):
         id = serializers.IntegerField(read_only=True)
@@ -427,21 +439,23 @@ class InquiryUpdateApiView(APIView):
 
         def validate(self, data):
             # Handle attachment field - can be file upload or string command
-            if 'attachment' in self.initial_data:
-                attachment_value = self.initial_data['attachment']
+            if "attachment" in self.initial_data:
+                attachment_value = self.initial_data["attachment"]
 
                 # Handle file uploads (multipart requests)
-                if hasattr(attachment_value, 'read'):
-                    data['attachment'] = attachment_value
+                if hasattr(attachment_value, "read"):
+                    data["attachment"] = attachment_value
                 # Handle string commands (JSON requests)
                 elif isinstance(attachment_value, str):
-                    if attachment_value == 'DELETE':
-                        data['attachment'] = None  # Signal for deletion
-                    elif attachment_value == '':
-                        data.pop('attachment', None)  # Remove from data = no change
+                    if attachment_value == "DELETE":
+                        data["attachment"] = None  # Signal for deletion
+                    elif attachment_value == "":
+                        data.pop("attachment", None)  # Remove from data = no change
                     else:
                         raise serializers.ValidationError(
-                            {"attachment": "Invalid value. Use 'DELETE' to remove attachment or upload a file."}
+                            {
+                                "attachment": "Invalid value. Use 'DELETE' to remove attachment or upload a file."
+                            }
                         )
                 else:
                     raise serializers.ValidationError(
@@ -449,9 +463,6 @@ class InquiryUpdateApiView(APIView):
                     )
 
             return data
-
-
-
 
     class InquiryUpdateResponseSerializer(serializers.Serializer):
         id = serializers.IntegerField(read_only=True)
@@ -494,7 +505,14 @@ class InquiryUpdateApiView(APIView):
             }
 
             # Only include fields that were explicitly provided in the request
-            for field in ["client", "text", "status", "comment", "sales_manager_id", "is_new_customer"]:
+            for field in [
+                "client",
+                "text",
+                "status",
+                "comment",
+                "sales_manager_id",
+                "is_new_customer",
+            ]:
                 if field in serializer.validated_data:
                     update_kwargs[field] = serializer.validated_data[field]
 
@@ -581,27 +599,29 @@ class InquiryStatsApiView(APIView):
                 "manager_id",
                 OpenApiTypes.INT,
                 description="Filter by sales manager ID (Admin only)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "year",
                 OpenApiTypes.INT,
                 description="Filter by year (e.g., 2024)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "month",
                 OpenApiTypes.INT,
                 description="Filter by month (1-12)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
-                "date_from", OpenApiTypes.DATE,
+                "date_from",
+                OpenApiTypes.DATE,
                 description="Start of date range (YYYY-MM-DD); use with date_to",
                 required=False,
             ),
             OpenApiParameter(
-                "date_to", OpenApiTypes.DATE,
+                "date_to",
+                OpenApiTypes.DATE,
                 description="End of date range (YYYY-MM-DD); use with date_from",
                 required=False,
             ),
@@ -610,9 +630,9 @@ class InquiryStatsApiView(APIView):
     )
     def get(self, request):
         # Parse query parameters
-        year = request.query_params.get('year')
-        month = request.query_params.get('month')
-        requested_manager_id = request.query_params.get('manager_id')
+        year = request.query_params.get("year")
+        month = request.query_params.get("month")
+        requested_manager_id = request.query_params.get("manager_id")
 
         # Validate year parameter
         if year is not None:
@@ -621,12 +641,12 @@ class InquiryStatsApiView(APIView):
                 if year < 1900 or year > 9999:
                     return Response(
                         {"message": "Year must be between 1900 and 9999"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             except ValueError:
                 return Response(
                     {"message": "Invalid year format. Must be an integer."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         # Validate month parameter
@@ -636,17 +656,17 @@ class InquiryStatsApiView(APIView):
                 if month < 1 or month > 12:
                     return Response(
                         {"message": "Month must be between 1 and 12"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             except ValueError:
                 return Response(
                     {"message": "Invalid month format. Must be an integer."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         # Parse optional explicit date range (YYYY-MM-DD)
-        date_from_raw = request.query_params.get('date_from')
-        date_to_raw = request.query_params.get('date_to')
+        date_from_raw = request.query_params.get("date_from")
+        date_to_raw = request.query_params.get("date_to")
         date_from = date_to = None
         if date_from_raw:
             try:
@@ -672,7 +692,7 @@ class InquiryStatsApiView(APIView):
             )
 
         # Determine manager_id based on user role and permissions
-        if request.user.user_type == 'admin':
+        if request.user.user_type == "admin":
             # Admins can filter by specific manager_id or see all
             if requested_manager_id is not None:
                 try:
@@ -680,7 +700,7 @@ class InquiryStatsApiView(APIView):
                 except ValueError:
                     return Response(
                         {"message": "Invalid manager_id format. Must be an integer."},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             else:
                 manager_id = None  # All managers
@@ -694,7 +714,7 @@ class InquiryStatsApiView(APIView):
             year=year,
             month=month,
             date_from=date_from,
-            date_to=date_to
+            date_to=date_to,
         )
 
         return Response(
@@ -758,13 +778,13 @@ class ManagerKPIApiView(APIView):
                 "date_from",
                 OpenApiTypes.DATE,
                 description="Filter from date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "date_to",
                 OpenApiTypes.DATE,
                 description="Filter to date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
         ],
         responses={200: ManagerKPIOutputSerializer},
@@ -772,50 +792,50 @@ class ManagerKPIApiView(APIView):
     def get(self, request, manager_id):
         try:
             # Security check: Managers can only view their own KPI data
-            if request.user.user_type != 'admin' and manager_id != request.user.id:
+            if request.user.user_type != "admin" and manager_id != request.user.id:
                 return Response(
-                    {"message": "Access denied"},
-                    status=status.HTTP_403_FORBIDDEN
+                    {"message": "Access denied"}, status=status.HTTP_403_FORBIDDEN
                 )
 
             # Parse date parameters
             date_from = None
             date_to = None
 
-            if request.query_params.get('date_from'):
+            if request.query_params.get("date_from"):
                 try:
-                    date_from = datetime.strptime(request.query_params['date_from'], '%Y-%m-%d')
+                    date_from = datetime.strptime(
+                        request.query_params["date_from"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_from format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            if request.query_params.get('date_to'):
+            if request.query_params.get("date_to"):
                 try:
-                    date_to = datetime.strptime(request.query_params['date_to'], '%Y-%m-%d')
+                    date_to = datetime.strptime(
+                        request.query_params["date_to"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_to format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             # Get KPI statistics
             data = InquirySelectors.get_manager_kpi_statistics(
-                manager_id=manager_id,
-                date_from=date_from,
-                date_to=date_to
+                manager_id=manager_id, date_from=date_from, date_to=date_to
             )
 
             return Response(
-                self.ManagerKPIOutputSerializer(data).data,
-                status=status.HTTP_200_OK
+                self.ManagerKPIOutputSerializer(data).data, status=status.HTTP_200_OK
             )
 
         except Exception as e:
             return Response(
                 {"message": f"Error retrieving manager KPI statistics: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -850,9 +870,13 @@ class DashboardKPIApiView(APIView):
     class ManagerPerformanceSerializer(serializers.Serializer):
         def to_representation(self, instance):
             return {
-                'manager': DashboardKPIApiView.ManagerSerializer(instance.get('manager', {})).data,
-                'inquiries': DashboardKPIApiView.InquiriesSerializer(instance.get('inquiries', {})).data,
-                'kpi': DashboardKPIApiView.KPISerializer(instance.get('kpi', {})).data
+                "manager": DashboardKPIApiView.ManagerSerializer(
+                    instance.get("manager", {})
+                ).data,
+                "inquiries": DashboardKPIApiView.InquiriesSerializer(
+                    instance.get("inquiries", {})
+                ).data,
+                "kpi": DashboardKPIApiView.KPISerializer(instance.get("kpi", {})).data,
             }
 
     class DashboardKPIOutputSerializer(serializers.Serializer):
@@ -868,13 +892,13 @@ class DashboardKPIApiView(APIView):
                 "date_from",
                 OpenApiTypes.DATE,
                 description="Filter from date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "date_to",
                 OpenApiTypes.DATE,
                 description="Filter to date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
         ],
         responses={200: DashboardKPIOutputSerializer},
@@ -885,57 +909,65 @@ class DashboardKPIApiView(APIView):
             date_from = None
             date_to = None
 
-            if request.query_params.get('date_from'):
+            if request.query_params.get("date_from"):
                 try:
-                    date_from = datetime.strptime(request.query_params['date_from'], '%Y-%m-%d')
+                    date_from = datetime.strptime(
+                        request.query_params["date_from"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_from format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            if request.query_params.get('date_to'):
+            if request.query_params.get("date_to"):
                 try:
-                    date_to = datetime.strptime(request.query_params['date_to'], '%Y-%m-%d')
+                    date_to = datetime.strptime(
+                        request.query_params["date_to"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_to format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             # Admins see all data, managers see only their own data
-            manager_id = None if request.user.user_type == 'admin' else request.user.id
+            manager_id = None if request.user.user_type == "admin" else request.user.id
 
             # Get dashboard KPI data
             data = InquirySelectors.get_kpi_dashboard_data(
-                date_from=date_from,
-                date_to=date_to,
-                manager_id=manager_id
+                date_from=date_from, date_to=date_to, manager_id=manager_id
             )
 
             # Convert managers_performance to API format
             restructured_data = []
-            for manager_data in data['managers_performance']:
+            for manager_data in data["managers_performance"]:
                 # Get performance grade for this manager
                 manager_grade = PerformanceTargetServices.get_performance_grade(
-                    manager_id=manager_data['sales_manager']['id'],
+                    manager_id=manager_data["sales_manager"]["id"],
                     date_from=date_from,
-                    date_to=date_to
+                    date_to=date_to,
                 )
-                manager_data['performance_grade'] = manager_grade.get('grade', 'unknown')
+                manager_data["performance_grade"] = manager_grade.get(
+                    "grade", "unknown"
+                )
                 restructured_manager = {
                     "manager": {
-                        "username": manager_data['sales_manager']['username'],
-                        "id": manager_data['sales_manager']['id'],
-                        "first_name": manager_data['sales_manager']['name'].split()[0] if ' ' in manager_data['sales_manager']['name'] else manager_data['sales_manager']['name'],
-                        "last_name": manager_data['sales_manager']['name'].split()[1] if ' ' in manager_data['sales_manager']['name'] else ""
+                        "username": manager_data["sales_manager"]["username"],
+                        "id": manager_data["sales_manager"]["id"],
+                        "first_name": manager_data["sales_manager"]["name"].split()[0]
+                        if " " in manager_data["sales_manager"]["name"]
+                        else manager_data["sales_manager"]["name"],
+                        "last_name": manager_data["sales_manager"]["name"].split()[1]
+                        if " " in manager_data["sales_manager"]["name"]
+                        else "",
                     },
                     "inquiries": {
-                        "total": manager_data['manager_total'],
-                        "pending": manager_data['manager_pending'],
-                        "quoted": manager_data['manager_quoted'],
-                        "failed": manager_data['manager_failed'],
-                        "success": manager_data['manager_success']
+                        "total": manager_data["manager_total"],
+                        "pending": manager_data["manager_pending"],
+                        "quoted": manager_data["manager_quoted"],
+                        "failed": manager_data["manager_failed"],
+                        "success": manager_data["manager_success"],
                     },
                     "kpi": {
                         "response_time": f"{manager_data['response_time_percentage']}",
@@ -943,20 +975,19 @@ class DashboardKPIApiView(APIView):
                         "conversion_rate": f"{manager_data['conversion_rate']}",
                         "new_customer": f"{manager_data['new_customers_percentage']}",
                         "overall_performance": f"{manager_data['overall_performance']}",
-                        "performance_grade": manager_data.get('performance_grade', 'unknown')
-                    }
+                        "performance_grade": manager_data.get(
+                            "performance_grade", "unknown"
+                        ),
+                    },
                 }
                 restructured_data.append(restructured_manager)
 
-            return Response(
-                restructured_data,
-                status=status.HTTP_200_OK
-            )
+            return Response(restructured_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(
                 {"message": f"Error retrieving dashboard KPI data: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -993,33 +1024,31 @@ class InquiryQuoteApiView(APIView):
             serializer = self.QuoteInputSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            quoted_at = serializer.validated_data.get('quoted_at')
+            quoted_at = serializer.validated_data.get("quoted_at")
 
             # Quote the inquiry
             updated_inquiry = InquiryKPIServices.quote_inquiry(
-                inquiry=inquiry,
-                quoted_at=quoted_at
+                inquiry=inquiry, quoted_at=quoted_at
             )
 
-            return Response({
-                "id": updated_inquiry.id,
-                "status": updated_inquiry.status,
-                "quoted_at": updated_inquiry.quoted_at,
-                "quote_time": updated_inquiry.quote_time,
-                "quote_grade": updated_inquiry.quote_grade,
-                "message": "Inquiry quoted successfully"
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "id": updated_inquiry.id,
+                    "status": updated_inquiry.status,
+                    "quoted_at": updated_inquiry.quoted_at,
+                    "quote_time": updated_inquiry.quote_time,
+                    "quote_grade": updated_inquiry.quote_grade,
+                    "message": "Inquiry quoted successfully",
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Inquiry.DoesNotExist:
             return Response(
-                {"message": "Inquiry not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"message": "Inquiry not found"}, status=status.HTTP_404_NOT_FOUND
             )
         except ValueError as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InquirySuccessApiView(APIView):
@@ -1055,35 +1084,31 @@ class InquirySuccessApiView(APIView):
             serializer = self.SuccessInputSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            success_at = serializer.validated_data.get('success_at')
+            success_at = serializer.validated_data.get("success_at")
 
             # Mark as successful
             updated_inquiry = InquiryKPIServices.complete_inquiry_success(
-                inquiry=inquiry,
-                success_at=success_at
+                inquiry=inquiry, success_at=success_at
             )
 
-            return Response({
-                "id": updated_inquiry.id,
-                "status": updated_inquiry.status,
-                "success_at": updated_inquiry.success_at,
-                "resolution_time": updated_inquiry.resolution_time,
-                "completion_grade": updated_inquiry.completion_grade,
-                "message": "Inquiry marked as successful"
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "id": updated_inquiry.id,
+                    "status": updated_inquiry.status,
+                    "success_at": updated_inquiry.success_at,
+                    "resolution_time": updated_inquiry.resolution_time,
+                    "completion_grade": updated_inquiry.completion_grade,
+                    "message": "Inquiry marked as successful",
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Inquiry.DoesNotExist:
             return Response(
-                {"message": "Inquiry not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"message": "Inquiry not found"}, status=status.HTTP_404_NOT_FOUND
             )
         except ValueError as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InquiryFailedApiView(APIView):
@@ -1123,29 +1148,27 @@ class InquiryFailedApiView(APIView):
 
             # Mark as failed
             updated_inquiry = InquiryKPIServices.complete_inquiry_failed(
-                inquiry=inquiry,
-                failed_at=failed_at
+                inquiry=inquiry, failed_at=failed_at
             )
 
-            return Response({
-                "id": updated_inquiry.id,
-                "status": updated_inquiry.status,
-                "failed_at": updated_inquiry.failed_at,
-                "resolution_time": updated_inquiry.resolution_time,
-                "completion_grade": updated_inquiry.completion_grade,
-                "message": "Inquiry marked as failed"
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "id": updated_inquiry.id,
+                    "status": updated_inquiry.status,
+                    "failed_at": updated_inquiry.failed_at,
+                    "resolution_time": updated_inquiry.resolution_time,
+                    "completion_grade": updated_inquiry.completion_grade,
+                    "message": "Inquiry marked as failed",
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Inquiry.DoesNotExist:
             return Response(
-                {"message": "Inquiry not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"message": "Inquiry not found"}, status=status.HTTP_404_NOT_FOUND
             )
         except ValueError as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InquiryKPILockApiView(APIView):
@@ -1157,9 +1180,7 @@ class InquiryKPILockApiView(APIView):
     permission_classes = [IsManagerOrAdmin]
 
     class KPILockInputSerializer(serializers.Serializer):
-        lock = serializers.BooleanField(
-            help_text="True to lock KPI, False to unlock"
-        )
+        lock = serializers.BooleanField(help_text="True to lock KPI, False to unlock")
 
     class KPILockOutputSerializer(serializers.Serializer):
         id = serializers.IntegerField()
@@ -1189,22 +1210,21 @@ class InquiryKPILockApiView(APIView):
                 updated_inquiry = InquiryKPIServices.unlock_inquiry_kpi(inquiry=inquiry)
                 message = "KPI unlocked successfully"
 
-            return Response({
-                "id": updated_inquiry.id,
-                "is_locked": updated_inquiry.is_locked,
-                "message": message
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "id": updated_inquiry.id,
+                    "is_locked": updated_inquiry.is_locked,
+                    "message": message,
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Inquiry.DoesNotExist:
             return Response(
-                {"message": "Inquiry not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"message": "Inquiry not found"}, status=status.HTTP_404_NOT_FOUND
             )
         except ValueError as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class KPIWeightsApiView(APIView):
@@ -1229,7 +1249,7 @@ class KPIWeightsApiView(APIView):
                 "email": serializers.EmailField(read_only=True),
             },
             allow_null=True,
-            read_only=True
+            read_only=True,
         )
 
     @extend_schema(
@@ -1244,7 +1264,7 @@ class KPIWeightsApiView(APIView):
         if weights_instance:
             return Response(
                 self.KPIWeightsOutputSerializer(weights_instance).data,
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
         else:
             # Return default weights if no configuration exists
@@ -1253,7 +1273,7 @@ class KPIWeightsApiView(APIView):
                 **default_weights,
                 "total_weight": 100.0,
                 "created_at": None,
-                "created_by": None
+                "created_by": None,
             }
             return Response(default_response, status=status.HTTP_200_OK)
 
@@ -1285,13 +1305,13 @@ class ManagerSelfKPIApiView(APIView):
                 "date_from",
                 OpenApiTypes.DATE,
                 description="Filter from date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "date_to",
                 OpenApiTypes.DATE,
                 description="Filter to date (YYYY-MM-DD)",
-                required=False
+                required=False,
             ),
         ],
         responses={200: ManagerSelfKPIOutputSerializer},
@@ -1302,103 +1322,111 @@ class ManagerSelfKPIApiView(APIView):
             date_from = None
             date_to = None
 
-            if request.query_params.get('date_from'):
+            if request.query_params.get("date_from"):
                 try:
-                    date_from = datetime.strptime(request.query_params['date_from'], '%Y-%m-%d')
+                    date_from = datetime.strptime(
+                        request.query_params["date_from"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_from format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            if request.query_params.get('date_to'):
+            if request.query_params.get("date_to"):
                 try:
-                    date_to = datetime.strptime(request.query_params['date_to'], '%Y-%m-%d')
+                    date_to = datetime.strptime(
+                        request.query_params["date_to"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_to format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             # Get KPI statistics for current manager only
             current_manager_id = request.user.id
             manager_stats = InquirySelectors.get_manager_kpi_statistics(
-                manager_id=current_manager_id,
-                date_from=date_from,
-                date_to=date_to
+                manager_id=current_manager_id, date_from=date_from, date_to=date_to
             )
 
             # If no inquiries found for this manager, return zeros with grade
-            if not manager_stats or manager_stats['total_inquiries'] == 0:
+            if not manager_stats or manager_stats["total_inquiries"] == 0:
                 grade_data = PerformanceTargetServices.get_performance_grade(
-                    manager_id=current_manager_id,
-                    date_from=date_from,
-                    date_to=date_to
+                    manager_id=current_manager_id, date_from=date_from, date_to=date_to
                 )
 
-                return Response({
-                    "response_time": 0.00,
-                    "follow_up": 0.00,
-                    "conversion_rate": 0.00,
-                    "new_customer": 0.00,
-                    "overall_performance": 0.00,
-                    "performance_grade": grade_data.get('grade', 'unknown'),
-                    "inquiry_count": grade_data.get('inquiry_count', 0),
-                    "target_bracket": grade_data.get('target_bracket', 'not_configured')
-                }, status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "response_time": 0.00,
+                        "follow_up": 0.00,
+                        "conversion_rate": 0.00,
+                        "new_customer": 0.00,
+                        "overall_performance": 0.00,
+                        "performance_grade": grade_data.get("grade", "unknown"),
+                        "inquiry_count": grade_data.get("inquiry_count", 0),
+                        "target_bracket": grade_data.get(
+                            "target_bracket", "not_configured"
+                        ),
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
             # Calculate performance percentages similar to dashboard logic
             # Response time percentage (quote efficiency)
-            max_quote_points = manager_stats['total_inquiries'] * 3
+            max_quote_points = manager_stats["total_inquiries"] * 3
             response_time_percentage = (
-                (manager_stats['total_quote_points'] / max_quote_points * 100)
-                if max_quote_points > 0 else 0.0
+                (manager_stats["total_quote_points"] / max_quote_points * 100)
+                if max_quote_points > 0
+                else 0.0
             )
 
             # Follow-up percentage (completion efficiency)
-            max_completion_points = manager_stats['completed_inquiries'] * 3
+            max_completion_points = manager_stats["completed_inquiries"] * 3
             follow_up_percentage = (
-                (manager_stats['total_completion_points'] / max_completion_points * 100)
-                if max_completion_points > 0 else 0.0
+                (manager_stats["total_completion_points"] / max_completion_points * 100)
+                if max_completion_points > 0
+                else 0.0
             )
 
             # Get weighted overall performance
             from .services import KPIWeightsServices
+
             overall_performance = KPIWeightsServices.calculate_weighted_kpi_score(
                 response_time_percentage=response_time_percentage,
                 follow_up_percentage=follow_up_percentage,
-                conversion_rate=manager_stats['conversion_rate'],
-                new_customer_percentage=manager_stats['lead_generation_rate']
+                conversion_rate=manager_stats["conversion_rate"],
+                new_customer_percentage=manager_stats["lead_generation_rate"],
             )
 
             # Get performance grade
             grade_data = PerformanceTargetServices.get_performance_grade(
-                manager_id=current_manager_id,
-                date_from=date_from,
-                date_to=date_to
+                manager_id=current_manager_id, date_from=date_from, date_to=date_to
             )
 
             # Format response to match KPISerializer structure with decimal values
             response_data = {
                 "response_time": round(response_time_percentage or 0, 2),
                 "follow_up": round(follow_up_percentage or 0, 2),
-                "conversion_rate": round(manager_stats.get('conversion_rate') or 0, 2),
-                "new_customer": round(manager_stats.get('lead_generation_rate') or 0, 2),
+                "conversion_rate": round(manager_stats.get("conversion_rate") or 0, 2),
+                "new_customer": round(
+                    manager_stats.get("lead_generation_rate") or 0, 2
+                ),
                 "overall_performance": round(overall_performance or 0, 2),
-                "performance_grade": grade_data.get('grade', 'unknown'),
-                "inquiry_count": grade_data.get('inquiry_count', 0),
-                "target_bracket": grade_data.get('target_bracket', 'not_configured')
+                "performance_grade": grade_data.get("grade", "unknown"),
+                "inquiry_count": grade_data.get("inquiry_count", 0),
+                "target_bracket": grade_data.get("target_bracket", "not_configured"),
             }
 
             return Response(
                 self.ManagerSelfKPIOutputSerializer(response_data).data,
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
             return Response(
                 {"message": f"Error retrieving KPI metrics: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -1415,34 +1443,34 @@ class KPIWeightsUpdateApiView(APIView):
             max_digits=5,
             decimal_places=2,
             min_value=0,
-            help_text="Weight for response time KPI (0-100)"
+            help_text="Weight for response time KPI (0-100)",
         )
         follow_up_weight = serializers.DecimalField(
             max_digits=5,
             decimal_places=2,
             min_value=0,
-            help_text="Weight for follow-up KPI (0-100)"
+            help_text="Weight for follow-up KPI (0-100)",
         )
         conversion_rate_weight = serializers.DecimalField(
             max_digits=5,
             decimal_places=2,
             min_value=0,
-            help_text="Weight for conversion rate KPI (0-100)"
+            help_text="Weight for conversion rate KPI (0-100)",
         )
         new_customer_weight = serializers.DecimalField(
             max_digits=5,
             decimal_places=2,
             min_value=0,
-            help_text="Weight for new customer KPI (0-100)"
+            help_text="Weight for new customer KPI (0-100)",
         )
 
         def validate(self, data):
             # Validate that weights sum to 100%
             total = (
-                data["response_time_weight"] +
-                data["follow_up_weight"] +
-                data["conversion_rate_weight"] +
-                data["new_customer_weight"]
+                data["response_time_weight"]
+                + data["follow_up_weight"]
+                + data["conversion_rate_weight"]
+                + data["new_customer_weight"]
             )
 
             if abs(total - 100) > 0.01:  # Allow small floating point differences
@@ -1466,7 +1494,7 @@ class KPIWeightsUpdateApiView(APIView):
                 "username": serializers.CharField(),
                 "email": serializers.EmailField(),
             },
-            allow_null=True
+            allow_null=True,
         )
         message = serializers.CharField()
 
@@ -1484,11 +1512,17 @@ class KPIWeightsUpdateApiView(APIView):
         try:
             # Create new weights configuration (replaces existing)
             weights = KPIWeightsServices.create_weights_configuration(
-                response_time_weight=float(serializer.validated_data["response_time_weight"]),
+                response_time_weight=float(
+                    serializer.validated_data["response_time_weight"]
+                ),
                 follow_up_weight=float(serializer.validated_data["follow_up_weight"]),
-                conversion_rate_weight=float(serializer.validated_data["conversion_rate_weight"]),
-                new_customer_weight=float(serializer.validated_data["new_customer_weight"]),
-                created_by=request.user
+                conversion_rate_weight=float(
+                    serializer.validated_data["conversion_rate_weight"]
+                ),
+                new_customer_weight=float(
+                    serializer.validated_data["new_customer_weight"]
+                ),
+                created_by=request.user,
             )
 
             response_data = {
@@ -1501,10 +1535,14 @@ class KPIWeightsUpdateApiView(APIView):
                 "created_at": weights.created_at,
                 "created_by": {
                     "id": weights.created_by.id if weights.created_by else None,
-                    "username": weights.created_by.username if weights.created_by else None,
+                    "username": weights.created_by.username
+                    if weights.created_by
+                    else None,
                     "email": weights.created_by.email if weights.created_by else None,
-                } if weights.created_by else None,
-                "message": "KPI weights updated successfully"
+                }
+                if weights.created_by
+                else None,
+                "message": "KPI weights updated successfully",
             }
 
             return Response(response_data, status=status.HTTP_200_OK)
@@ -1512,11 +1550,12 @@ class KPIWeightsUpdateApiView(APIView):
         except Exception as e:
             return Response(
                 {"message": f"Error updating KPI weights: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
 # Performance Target Management APIs
+
 
 class PerformanceTargetListApiView(APIView):
     """
@@ -1545,41 +1584,45 @@ class PerformanceTargetListApiView(APIView):
                 "include_inactive",
                 OpenApiTypes.BOOL,
                 description="Include inactive targets (default: false)",
-                required=False
+                required=False,
             ),
         ],
         responses={200: TargetListOutputSerializer(many=True)},
     )
     def get(self, request):
-        include_inactive = request.query_params.get('include_inactive', 'false').lower() == 'true'
+        include_inactive = (
+            request.query_params.get("include_inactive", "false").lower() == "true"
+        )
 
         try:
-            targets = PerformanceTargetSelectors.get_all_targets(include_inactive=include_inactive)
+            targets = PerformanceTargetSelectors.get_all_targets(
+                include_inactive=include_inactive
+            )
 
             # Format the data
             targets_data = []
             for target in targets:
                 target_data = {
-                    'id': target.id,
-                    'volume_range': target.volume_display,
-                    'min_inquiries': target.min_inquiries,
-                    'max_inquiries': target.max_inquiries,
-                    'excellent_threshold': target.excellent_threshold,
-                    'is_active': target.is_active,
-                    'created_at': target.created_at,
-                    'updated_at': target.updated_at,
+                    "id": target.id,
+                    "volume_range": target.volume_display,
+                    "min_inquiries": target.min_inquiries,
+                    "max_inquiries": target.max_inquiries,
+                    "excellent_threshold": target.excellent_threshold,
+                    "is_active": target.is_active,
+                    "created_at": target.created_at,
+                    "updated_at": target.updated_at,
                 }
                 targets_data.append(target_data)
 
             return Response(
                 self.TargetListOutputSerializer(targets_data, many=True).data,
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
             return Response(
                 {"message": f"Error retrieving targets: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -1593,12 +1636,17 @@ class PerformanceTargetCreateApiView(APIView):
 
     class TargetCreateInputSerializer(serializers.Serializer):
         min_inquiries = serializers.IntegerField(min_value=0)
-        max_inquiries = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+        max_inquiries = serializers.IntegerField(
+            min_value=0, required=False, allow_null=True
+        )
         excellent_threshold = serializers.FloatField(min_value=0, max_value=100)
 
         def validate(self, data):
             # Validate volume range
-            if data.get('max_inquiries') is not None and data['max_inquiries'] < data['min_inquiries']:
+            if (
+                data.get("max_inquiries") is not None
+                and data["max_inquiries"] < data["min_inquiries"]
+            ):
                 raise serializers.ValidationError(
                     "max_inquiries must be greater than or equal to min_inquiries"
                 )
@@ -1628,31 +1676,31 @@ class PerformanceTargetCreateApiView(APIView):
 
         try:
             target = PerformanceTargetServices.create_target(
-                min_inquiries=serializer.validated_data['min_inquiries'],
-                max_inquiries=serializer.validated_data.get('max_inquiries'),
-                excellent_threshold=serializer.validated_data['excellent_threshold']
+                min_inquiries=serializer.validated_data["min_inquiries"],
+                max_inquiries=serializer.validated_data.get("max_inquiries"),
+                excellent_threshold=serializer.validated_data["excellent_threshold"],
             )
 
             response_data = {
-                'id': target.id,
-                'volume_range': target.volume_display,
-                'min_inquiries': target.min_inquiries,
-                'max_inquiries': target.max_inquiries,
-                'excellent_threshold': target.excellent_threshold,
-                'is_active': target.is_active,
-                'created_at': target.created_at,
-                'message': 'Performance target created successfully'
+                "id": target.id,
+                "volume_range": target.volume_display,
+                "min_inquiries": target.min_inquiries,
+                "max_inquiries": target.max_inquiries,
+                "excellent_threshold": target.excellent_threshold,
+                "is_active": target.is_active,
+                "created_at": target.created_at,
+                "message": "Performance target created successfully",
             }
 
             return Response(
                 self.TargetCreateOutputSerializer(response_data).data,
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         except Exception as e:
             return Response(
                 {"message": f"Error creating target: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -1667,7 +1715,9 @@ class PerformanceTargetUpdateApiView(APIView):
     class TargetItemInputSerializer(serializers.Serializer):
         id = serializers.IntegerField(required=False)
         min_inquiries = serializers.IntegerField(min_value=0)
-        max_inquiries = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+        max_inquiries = serializers.IntegerField(
+            min_value=0, required=False, allow_null=True
+        )
         excellent_kpi = serializers.FloatField(min_value=0, max_value=100)
         is_active = serializers.BooleanField(required=False, default=True)
 
@@ -1678,7 +1728,9 @@ class PerformanceTargetUpdateApiView(APIView):
 
             validated_items = []
             for i, item in enumerate(data):
-                item_serializer = PerformanceTargetUpdateApiView.TargetItemInputSerializer(data=item)
+                item_serializer = (
+                    PerformanceTargetUpdateApiView.TargetItemInputSerializer(data=item)
+                )
                 try:
                     item_serializer.is_valid(raise_exception=True)
                     validated_items.append(item_serializer.validated_data)
@@ -1708,22 +1760,18 @@ class PerformanceTargetUpdateApiView(APIView):
         responses={200: TargetBulkOutputSerializer},
         examples=[
             OpenApiExample(
-                'Bulk Create/Update Example',
+                "Bulk Create/Update Example",
                 value=[
-                    {
-                        "min_inquiries": 0,
-                        "max_inquiries": 25,
-                        "excellent_kpi": 90
-                    },
+                    {"min_inquiries": 0, "max_inquiries": 25, "excellent_kpi": 90},
                     {
                         "id": 1,
                         "min_inquiries": 26,
                         "max_inquiries": 50,
-                        "excellent_kpi": 85
-                    }
-                ]
+                        "excellent_kpi": 85,
+                    },
+                ],
             )
-        ]
+        ],
     )
     def put(self, request, target_id=None):
         serializer = self.TargetBulkInputSerializer(data=request.data)
@@ -1736,35 +1784,37 @@ class PerformanceTargetUpdateApiView(APIView):
 
             targets_data = []
             for target in targets:
-                targets_data.append({
-                    'id': target.id,
-                    'volume_range': target.volume_display,
-                    'min_inquiries': target.min_inquiries,
-                    'max_inquiries': target.max_inquiries,
-                    'excellent_threshold': target.excellent_threshold,
-                    'is_active': target.is_active,
-                    'updated_at': target.updated_at,
-                })
+                targets_data.append(
+                    {
+                        "id": target.id,
+                        "volume_range": target.volume_display,
+                        "min_inquiries": target.min_inquiries,
+                        "max_inquiries": target.max_inquiries,
+                        "excellent_threshold": target.excellent_threshold,
+                        "is_active": target.is_active,
+                        "updated_at": target.updated_at,
+                    }
+                )
 
             response_data = {
-                'targets': targets_data,
-                'message': f'Successfully processed {len(targets)} performance targets'
+                "targets": targets_data,
+                "message": f"Successfully processed {len(targets)} performance targets",
             }
 
             return Response(
                 self.TargetBulkOutputSerializer(response_data).data,
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except PerformanceTarget.DoesNotExist:
             return Response(
                 {"message": "One or more performance targets not found"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             return Response(
                 {"message": f"Error processing targets: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -1799,12 +1849,12 @@ class PerformanceTargetDeleteApiView(APIView):
         except PerformanceTarget.DoesNotExist:
             return Response(
                 {"message": "Performance target not found"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             return Response(
                 {"message": f"Error deleting target: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -1838,13 +1888,13 @@ class ManagerPerformanceGradeApiView(APIView):
                 "date_from",
                 OpenApiTypes.DATE,
                 description="Filter from date (YYYY-MM-DD) - defaults to current month start",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "date_to",
                 OpenApiTypes.DATE,
                 description="Filter to date (YYYY-MM-DD) - defaults to current month end",
-                required=False
+                required=False,
             ),
         ],
         responses={200: PerformanceGradeOutputSerializer},
@@ -1855,45 +1905,49 @@ class ManagerPerformanceGradeApiView(APIView):
             date_from = None
             date_to = None
 
-            if request.query_params.get('date_from'):
+            if request.query_params.get("date_from"):
                 try:
-                    date_from = datetime.strptime(request.query_params['date_from'], '%Y-%m-%d')
+                    date_from = datetime.strptime(
+                        request.query_params["date_from"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_from format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            if request.query_params.get('date_to'):
+            if request.query_params.get("date_to"):
                 try:
-                    date_to = datetime.strptime(request.query_params['date_to'], '%Y-%m-%d')
+                    date_to = datetime.strptime(
+                        request.query_params["date_to"], "%Y-%m-%d"
+                    )
                 except ValueError:
                     return Response(
                         {"message": "Invalid date_to format. Use YYYY-MM-DD"},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             # Get performance grade for current manager
             grade_data = PerformanceTargetServices.get_performance_grade(
-                manager_id=request.user.id,
-                date_from=date_from,
-                date_to=date_to
+                manager_id=request.user.id, date_from=date_from, date_to=date_to
             )
 
             # Return formatted response
             return Response(
-                self.PerformanceGradeOutputSerializer({
-                    'grade': grade_data['grade'],
-                    'performance': grade_data['performance'],
-                    'inquiry_count': grade_data['inquiry_count'],
-                    'target_bracket': grade_data['target_bracket'],
-                    'thresholds': grade_data['thresholds']
-                }).data,
-                status=status.HTTP_200_OK
+                self.PerformanceGradeOutputSerializer(
+                    {
+                        "grade": grade_data["grade"],
+                        "performance": grade_data["performance"],
+                        "inquiry_count": grade_data["inquiry_count"],
+                        "target_bracket": grade_data["target_bracket"],
+                        "thresholds": grade_data["thresholds"],
+                    }
+                ).data,
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
             return Response(
                 {"message": f"Error retrieving performance grade: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )

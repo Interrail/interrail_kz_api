@@ -86,9 +86,7 @@ class MunichAuthManager:
                 access_token = data["access"]
 
                 # Store new access token
-                cache.set(
-                    self.ACCESS_TOKEN_KEY, access_token, timeout=3600
-                )  # 1 hour
+                cache.set(self.ACCESS_TOKEN_KEY, access_token, timeout=3600)  # 1 hour
                 self._update_token_expiry()
 
                 logger.info("Successfully refreshed Munich API token")

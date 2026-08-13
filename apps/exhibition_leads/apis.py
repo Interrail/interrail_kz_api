@@ -128,7 +128,12 @@ class ExhibitionLeadListAPI(APIView):
 
             # Build params dict with support for multiple values
             params = {}
-            multi_value_params = ['category_id', 'importance', 'company_type', 'mode_of_transport']
+            multi_value_params = [
+                "category_id",
+                "importance",
+                "company_type",
+                "mode_of_transport",
+            ]
 
             for key in request.query_params.keys():
                 values = request.query_params.getlist(key)

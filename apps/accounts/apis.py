@@ -121,9 +121,9 @@ class UserListApiView(APIView):
 
         # Apply role-based filtering for user access
         filters = filter_serializer.validated_data
-        if request.user.user_type != 'admin':
+        if request.user.user_type != "admin":
             # Managers can only see themselves
-            filters['id'] = request.user.id
+            filters["id"] = request.user.id
 
         # Get filtered queryset
         queryset = UserSelectors.user_list(filters=filters)
@@ -168,10 +168,9 @@ class UserDetailApiView(APIView):
     def get(self, request, user_id):
         try:
             # Security check: Managers can only view their own profile
-            if request.user.user_type != 'admin' and user_id != request.user.id:
+            if request.user.user_type != "admin" and user_id != request.user.id:
                 return Response(
-                    {"message": "Access denied"},
-                    status=status.HTTP_403_FORBIDDEN
+                    {"message": "Access denied"}, status=status.HTTP_403_FORBIDDEN
                 )
 
             data = UserSelectors.get_user_profile_data(
@@ -311,10 +310,9 @@ class UserUpdateApiView(APIView):
     )
     def put(self, request, user_id):
         # Security check: Managers can only update their own profile
-        if request.user.user_type != 'admin' and user_id != request.user.id:
+        if request.user.user_type != "admin" and user_id != request.user.id:
             return Response(
-                {"message": "Access denied"},
-                status=status.HTTP_403_FORBIDDEN
+                {"message": "Access denied"}, status=status.HTTP_403_FORBIDDEN
             )
 
         serializer = self.UserUpdateSerializer(data=request.data)
@@ -400,10 +398,9 @@ class UserStatsApiView(APIView):
     )
     def get(self, request):
         # Security check: Only admins can see user statistics
-        if request.user.user_type != 'admin':
+        if request.user.user_type != "admin":
             return Response(
-                {"message": "Access denied"},
-                status=status.HTTP_403_FORBIDDEN
+                {"message": "Access denied"}, status=status.HTTP_403_FORBIDDEN
             )
 
         data = UserSelectors.get_users_stats()
@@ -452,12 +449,14 @@ class UserSearchApiView(APIView):
             )
 
         # Security check: Managers can only search for themselves
-        if request.user.user_type != 'admin':
+        if request.user.user_type != "admin":
             # Return only current user if query matches
-            if (query.lower() in request.user.username.lower() or
-                query.lower() in request.user.email.lower() or
-                query.lower() in (request.user.first_name or '').lower() or
-                query.lower() in (request.user.last_name or '').lower()):
+            if (
+                query.lower() in request.user.username.lower()
+                or query.lower() in request.user.email.lower()
+                or query.lower() in (request.user.first_name or "").lower()
+                or query.lower() in (request.user.last_name or "").lower()
+            ):
                 user_data = UserSelectors.get_user_profile_data(user=request.user)
                 return Response(
                     self.UserSearchOutputSerializer([user_data], many=True).data,

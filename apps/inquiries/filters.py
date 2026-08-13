@@ -14,12 +14,16 @@ class InquiryFilter(django_filters.FilterSet):
     sales_manager_id = django_filters.NumberFilter()
 
     # Date filters
-    year = django_filters.NumberFilter(field_name='created_at', lookup_expr='year')
-    month = django_filters.NumberFilter(field_name='created_at', lookup_expr='month')
+    year = django_filters.NumberFilter(field_name="created_at", lookup_expr="year")
+    month = django_filters.NumberFilter(field_name="created_at", lookup_expr="month")
 
     # Explicit date range on created_at
-    date_from = django_filters.DateFilter(field_name="created_at", lookup_expr="date__gte")
-    date_to = django_filters.DateFilter(field_name="created_at", lookup_expr="date__lte")
+    date_from = django_filters.DateFilter(
+        field_name="created_at", lookup_expr="date__gte"
+    )
+    date_to = django_filters.DateFilter(
+        field_name="created_at", lookup_expr="date__lte"
+    )
 
     # Search across multiple fields
     search = django_filters.CharFilter(method="filter_search")
@@ -48,7 +52,7 @@ class InquiryFilter(django_filters.FilterSet):
         if not value:
             return queryset
 
-        return queryset.select_related('sales_manager').filter(
+        return queryset.select_related("sales_manager").filter(
             models.Q(client__icontains=value)
             | models.Q(text__icontains=value)
             | models.Q(comment__icontains=value)

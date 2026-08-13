@@ -58,6 +58,7 @@ User = get_user_model()
 @dataclass
 class ManagerProfile:
     """Performance profile for generating realistic manager KPI data"""
+
     name: str
     quote_speed_range: tuple[int, int]  # (min_hours, max_hours)
     grade_distribution: dict[str, float]  # {'A': 0.6, 'B': 0.3, 'C': 0.1}
@@ -68,50 +69,50 @@ class ManagerProfile:
 
 # Predefined manager performance profiles
 MANAGER_PROFILES = {
-    'high_performer': ManagerProfile(
-        name='High Performer',
+    "high_performer": ManagerProfile(
+        name="High Performer",
         quote_speed_range=(2, 48),  # Very fast quotes
-        grade_distribution={'A': 0.6, 'B': 0.3, 'C': 0.1},
+        grade_distribution={"A": 0.6, "B": 0.3, "C": 0.1},
         success_rate=0.8,
         resolution_speed_range=(24, 96),  # Fast resolution
-        edge_case_probability=0.02
+        edge_case_probability=0.02,
     ),
-    'average_performer': ManagerProfile(
-        name='Average Performer',
+    "average_performer": ManagerProfile(
+        name="Average Performer",
         quote_speed_range=(24, 72),  # Moderate timing
-        grade_distribution={'A': 0.3, 'B': 0.5, 'C': 0.2},
+        grade_distribution={"A": 0.3, "B": 0.5, "C": 0.2},
         success_rate=0.6,
         resolution_speed_range=(48, 168),  # Average resolution
-        edge_case_probability=0.05
+        edge_case_probability=0.05,
     ),
-    'struggling_performer': ManagerProfile(
-        name='Struggling Performer',
+    "struggling_performer": ManagerProfile(
+        name="Struggling Performer",
         quote_speed_range=(48, 120),  # Slower quotes
-        grade_distribution={'A': 0.2, 'B': 0.3, 'C': 0.5},
+        grade_distribution={"A": 0.2, "B": 0.3, "C": 0.5},
         success_rate=0.4,
         resolution_speed_range=(96, 240),  # Slow resolution
-        edge_case_probability=0.1
-    )
+        edge_case_probability=0.1,
+    ),
 }
 
 # Workflow patterns for realistic inquiry progression
 WORKFLOW_PATTERNS = {
-    'complete_success': {
-        'sequence': ['pending', 'quoted', 'success'],
-        'base_probability': 0.35,
+    "complete_success": {
+        "sequence": ["pending", "quoted", "success"],
+        "base_probability": 0.35,
     },
-    'complete_failed': {
-        'sequence': ['pending', 'quoted', 'failed'],
-        'base_probability': 0.15,
+    "complete_failed": {
+        "sequence": ["pending", "quoted", "failed"],
+        "base_probability": 0.15,
     },
-    'quoted_pending': {
-        'sequence': ['pending', 'quoted'],
-        'base_probability': 0.25,
+    "quoted_pending": {
+        "sequence": ["pending", "quoted"],
+        "base_probability": 0.25,
     },
-    'still_pending': {
-        'sequence': ['pending'],
-        'base_probability': 0.25,
-    }
+    "still_pending": {
+        "sequence": ["pending"],
+        "base_probability": 0.25,
+    },
 }
 
 
@@ -128,7 +129,11 @@ class TimestampGenerator:
         creation_time = base_time - timedelta(seconds=seconds_back)
 
         # Ensure it's during business hours (weekdays, 9 AM - 6 PM Kazakhstan time)
-        while creation_time.weekday() >= 5 or creation_time.hour < 9 or creation_time.hour >= 18:
+        while (
+            creation_time.weekday() >= 5
+            or creation_time.hour < 9
+            or creation_time.hour >= 18
+        ):
             creation_time += timedelta(hours=1)
 
         return creation_time
@@ -183,31 +188,35 @@ class KPIDataGenerator:
         # Adjust probabilities based on manager success rate
         adjusted_patterns = {}
         for pattern_name, pattern_data in WORKFLOW_PATTERNS.items():
-            if pattern_name == 'complete_success':
-                adjusted_patterns[pattern_name] = pattern_data['base_probability'] * profile.success_rate
-            elif pattern_name == 'complete_failed':
-                adjusted_patterns[pattern_name] = pattern_data['base_probability'] * (1 - profile.success_rate)
+            if pattern_name == "complete_success":
+                adjusted_patterns[pattern_name] = (
+                    pattern_data["base_probability"] * profile.success_rate
+                )
+            elif pattern_name == "complete_failed":
+                adjusted_patterns[pattern_name] = pattern_data["base_probability"] * (
+                    1 - profile.success_rate
+                )
             else:
-                adjusted_patterns[pattern_name] = pattern_data['base_probability']
+                adjusted_patterns[pattern_name] = pattern_data["base_probability"]
 
         # Normalize probabilities
         total = sum(adjusted_patterns.values())
-        normalized = {k: v/total for k, v in adjusted_patterns.items()}
+        normalized = {k: v / total for k, v in adjusted_patterns.items()}
 
         return random.choices(
-            list(normalized.keys()),
-            weights=list(normalized.values())
+            list(normalized.keys()), weights=list(normalized.values())
         )[0]
 
-    def generate_kpi_workflow(self, inquiry: Inquiry, profile: ManagerProfile,
-                            creation_time: datetime) -> dict:
+    def generate_kpi_workflow(
+        self, inquiry: Inquiry, profile: ManagerProfile, creation_time: datetime
+    ) -> dict:
         """Generate complete KPI workflow for an inquiry"""
         workflow_pattern = self.select_workflow_pattern(profile)
-        sequence = WORKFLOW_PATTERNS[workflow_pattern]['sequence']
+        sequence = WORKFLOW_PATTERNS[workflow_pattern]["sequence"]
 
         kpi_data = {
-            'status': sequence[-1],  # Final status
-            'created_at': creation_time
+            "status": sequence[-1],  # Final status
+            "created_at": creation_time,
         }
 
         current_time = creation_time
@@ -215,62 +224,76 @@ class KPIDataGenerator:
         # Generate quote data if needed
         if len(sequence) > 1:  # Has quote step
             quote_hours = random.randint(*profile.quote_speed_range)
-            quoted_at = self.timestamp_generator.add_business_hours(current_time, quote_hours)
+            quoted_at = self.timestamp_generator.add_business_hours(
+                current_time, quote_hours
+            )
 
             # Calculate quote metrics
             quote_time = get_business_hours_between(current_time, quoted_at)
             quote_grade = calculate_quote_grade(quote_time)
 
             # Apply profile-based grade distribution
-            if random.random() < 0.3:  # 30% chance to override with profile distribution
+            if (
+                random.random() < 0.3
+            ):  # 30% chance to override with profile distribution
                 quote_grade = random.choices(
                     list(profile.grade_distribution.keys()),
-                    weights=list(profile.grade_distribution.values())
+                    weights=list(profile.grade_distribution.values()),
                 )[0]
 
-            kpi_data.update({
-                'quoted_at': quoted_at,
-                'quote_time': quote_time,
-                'quote_grade': quote_grade,
-            })
+            kpi_data.update(
+                {
+                    "quoted_at": quoted_at,
+                    "quote_time": quote_time,
+                    "quote_grade": quote_grade,
+                }
+            )
 
             current_time = quoted_at
 
         # Generate completion data if needed
         if len(sequence) > 2:  # Has completion step
             resolution_hours = random.randint(*profile.resolution_speed_range)
-            completion_time = self.timestamp_generator.add_business_hours(current_time, resolution_hours)
+            completion_time = self.timestamp_generator.add_business_hours(
+                current_time, resolution_hours
+            )
 
             # Calculate completion metrics
             resolution_time = get_business_hours_between(current_time, completion_time)
             completion_grade = calculate_completion_grade(resolution_time)
 
             # Apply profile-based grade distribution
-            if random.random() < 0.3:  # 30% chance to override with profile distribution
+            if (
+                random.random() < 0.3
+            ):  # 30% chance to override with profile distribution
                 completion_grade = random.choices(
                     list(profile.grade_distribution.keys()),
-                    weights=list(profile.grade_distribution.values())
+                    weights=list(profile.grade_distribution.values()),
                 )[0]
 
-            if sequence[-1] == 'success':
-                kpi_data.update({
-                    'success_at': completion_time,
-                    'resolution_time': resolution_time,
-                    'completion_grade': completion_grade,
-                })
+            if sequence[-1] == "success":
+                kpi_data.update(
+                    {
+                        "success_at": completion_time,
+                        "resolution_time": resolution_time,
+                        "completion_grade": completion_grade,
+                    }
+                )
             else:  # failed
-                kpi_data.update({
-                    'failed_at': completion_time,
-                    'resolution_time': resolution_time,
-                    'completion_grade': completion_grade,
-                })
+                kpi_data.update(
+                    {
+                        "failed_at": completion_time,
+                        "resolution_time": resolution_time,
+                        "completion_grade": completion_grade,
+                    }
+                )
 
         # Add edge cases occasionally
         if random.random() < profile.edge_case_probability:
             if random.choice([True, False]):
-                kpi_data['is_locked'] = True
+                kpi_data["is_locked"] = True
             else:
-                kpi_data['auto_completion'] = True
+                kpi_data["auto_completion"] = True
 
         return kpi_data
 
@@ -316,8 +339,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--grade-distribution",
-            choices=['auto', 'high', 'average', 'poor'],
-            default='auto',
+            choices=["auto", "high", "average", "poor"],
+            default="auto",
             help="Control grade distribution (auto=profile-based)",
         )
         parser.add_argument(
@@ -399,7 +422,9 @@ class Command(BaseCommand):
             # Assign profiles to managers
             if use_manager_profiles:
                 for manager in sales_managers:
-                    manager_profiles[manager.id] = kpi_generator.assign_manager_profile(manager)
+                    manager_profiles[manager.id] = kpi_generator.assign_manager_profile(
+                        manager
+                    )
 
                 self.stdout.write("👥 Manager Profiles:")
                 for manager in sales_managers:
@@ -467,7 +492,7 @@ class Command(BaseCommand):
         for i in range(count):
             # Show progress for large counts
             if count > 20 and i % 10 == 0:
-                self.stdout.write(f"  Progress: {i}/{count}", ending='\r')
+                self.stdout.write(f"  Progress: {i}/{count}", ending="\r")
 
             # Random data selection
             client = random.choice(clients)
@@ -482,8 +507,10 @@ class Command(BaseCommand):
             if with_kpi:
                 # Generate creation time within date range
                 if realistic_timing:
-                    creation_time = kpi_generator.timestamp_generator.generate_creation_time(
-                        base_time, date_range
+                    creation_time = (
+                        kpi_generator.timestamp_generator.generate_creation_time(
+                            base_time, date_range
+                        )
                     )
                 else:
                     # Simple random time
@@ -496,7 +523,7 @@ class Command(BaseCommand):
                     profile = manager_profiles[sales_manager.id]
                 else:
                     # Use default profile
-                    profile = MANAGER_PROFILES['average_performer']
+                    profile = MANAGER_PROFILES["average_performer"]
 
                 # Generate KPI workflow data
                 kpi_data = kpi_generator.generate_kpi_workflow(
@@ -504,40 +531,44 @@ class Command(BaseCommand):
                 )
 
                 # Apply grade distribution override
-                if grade_distribution != 'auto':
+                if grade_distribution != "auto":
                     distribution_map = {
-                        'high': MANAGER_PROFILES['high_performer'].grade_distribution,
-                        'average': MANAGER_PROFILES['average_performer'].grade_distribution,
-                        'poor': MANAGER_PROFILES['struggling_performer'].grade_distribution,
+                        "high": MANAGER_PROFILES["high_performer"].grade_distribution,
+                        "average": MANAGER_PROFILES[
+                            "average_performer"
+                        ].grade_distribution,
+                        "poor": MANAGER_PROFILES[
+                            "struggling_performer"
+                        ].grade_distribution,
                     }
                     override_dist = distribution_map[grade_distribution]
 
-                    if 'quote_grade' in kpi_data:
-                        kpi_data['quote_grade'] = random.choices(
+                    if "quote_grade" in kpi_data:
+                        kpi_data["quote_grade"] = random.choices(
                             list(override_dist.keys()),
-                            weights=list(override_dist.values())
+                            weights=list(override_dist.values()),
                         )[0]
 
-                    if 'completion_grade' in kpi_data:
-                        kpi_data['completion_grade'] = random.choices(
+                    if "completion_grade" in kpi_data:
+                        kpi_data["completion_grade"] = random.choices(
                             list(override_dist.keys()),
-                            weights=list(override_dist.values())
+                            weights=list(override_dist.values()),
                         )[0]
 
                 # Apply edge cases probability override
                 if random.random() < edge_cases_prob:
                     if random.choice([True, False]):
-                        kpi_data['is_locked'] = True
+                        kpi_data["is_locked"] = True
                     else:
-                        kpi_data['auto_completion'] = True
+                        kpi_data["auto_completion"] = True
 
                 # Create inquiry with all KPI data
                 inquiry_data = {
-                    'client': client,
-                    'text': text,
-                    'comment': comment,
-                    'is_new_customer': is_new_customer,
-                    'sales_manager': sales_manager,
+                    "client": client,
+                    "text": text,
+                    "comment": comment,
+                    "is_new_customer": is_new_customer,
+                    "sales_manager": sales_manager,
                 }
                 inquiry_data.update(kpi_data)
 
@@ -559,7 +590,7 @@ class Command(BaseCommand):
 
         # Clear progress line
         if count > 20:
-            self.stdout.write("  " + " " * 20, ending='\r')
+            self.stdout.write("  " + " " * 20, ending="\r")
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -585,7 +616,7 @@ class Command(BaseCommand):
         for inquiry in created_inquiries:
             manager_name = inquiry.sales_manager.username
             manager_distribution[manager_name] = (
-                    manager_distribution.get(manager_name, 0) + 1
+                manager_distribution.get(manager_name, 0) + 1
             )
 
         self.stdout.write(f"  Assigned to {len(sales_managers)} managers:")
@@ -610,36 +641,40 @@ class Command(BaseCommand):
 
         # Check 1: Inquiries with success_at but no quoted_at
         invalid_success = Inquiry.objects.filter(
-            success_at__isnull=False,
-            quoted_at__isnull=True
+            success_at__isnull=False, quoted_at__isnull=True
         ).count()
         if invalid_success > 0:
-            issues.append(f"❌ {invalid_success} success inquiries without quote timestamp")
+            issues.append(
+                f"❌ {invalid_success} success inquiries without quote timestamp"
+            )
 
         # Check 2: Inquiries with failed_at but no quoted_at
         invalid_failed = Inquiry.objects.filter(
-            failed_at__isnull=False,
-            quoted_at__isnull=True
+            failed_at__isnull=False, quoted_at__isnull=True
         ).count()
         if invalid_failed > 0:
-            issues.append(f"❌ {invalid_failed} failed inquiries without quote timestamp")
+            issues.append(
+                f"❌ {invalid_failed} failed inquiries without quote timestamp"
+            )
 
         # Check 3: Status mismatches
         status_mismatches = 0
-        for inquiry in Inquiry.objects.select_related('sales_manager'):
-            expected_status = 'pending'
+        for inquiry in Inquiry.objects.select_related("sales_manager"):
+            expected_status = "pending"
             if inquiry.quoted_at:
-                expected_status = 'quoted'
+                expected_status = "quoted"
             if inquiry.success_at:
-                expected_status = 'success'
+                expected_status = "success"
             elif inquiry.failed_at:
-                expected_status = 'failed'
+                expected_status = "failed"
 
             if inquiry.status != expected_status:
                 status_mismatches += 1
 
         if status_mismatches > 0:
-            issues.append(f"❌ {status_mismatches} inquiries with status/timestamp mismatches")
+            issues.append(
+                f"❌ {status_mismatches} inquiries with status/timestamp mismatches"
+            )
 
         # Check 4: Invalid timestamp sequences
         invalid_sequences = 0
@@ -650,35 +685,55 @@ class Command(BaseCommand):
                 invalid_sequences += 1
             if inquiry.failed_at and inquiry.failed_at < inquiry.created_at:
                 invalid_sequences += 1
-            if (inquiry.success_at and inquiry.quoted_at and
-                inquiry.success_at < inquiry.quoted_at):
+            if (
+                inquiry.success_at
+                and inquiry.quoted_at
+                and inquiry.success_at < inquiry.quoted_at
+            ):
                 invalid_sequences += 1
-            if (inquiry.failed_at and inquiry.quoted_at and
-                inquiry.failed_at < inquiry.quoted_at):
+            if (
+                inquiry.failed_at
+                and inquiry.quoted_at
+                and inquiry.failed_at < inquiry.quoted_at
+            ):
                 invalid_sequences += 1
 
         if invalid_sequences > 0:
-            issues.append(f"❌ {invalid_sequences} inquiries with invalid timestamp sequences")
+            issues.append(
+                f"❌ {invalid_sequences} inquiries with invalid timestamp sequences"
+            )
 
         # Report results
         if issues:
-            self.stdout.write(f"\n📊 Validation Results ({total_inquiries} total inquiries):")
+            self.stdout.write(
+                f"\n📊 Validation Results ({total_inquiries} total inquiries):"
+            )
             for issue in issues:
                 self.stdout.write(f"  {issue}")
         else:
-            self.stdout.write(f"✅ All {total_inquiries} inquiries have valid KPI data!")
+            self.stdout.write(
+                f"✅ All {total_inquiries} inquiries have valid KPI data!"
+            )
 
         # Basic KPI statistics
         kpi_stats = Inquiry.objects.aggregate(
-            with_quotes=models.Count('id', filter=models.Q(quoted_at__isnull=False)),
-            with_completion=models.Count('id', filter=models.Q(success_at__isnull=False) | models.Q(failed_at__isnull=False)),
-            locked_count=models.Count('id', filter=models.Q(is_locked=True)),
-            auto_completion_count=models.Count('id', filter=models.Q(auto_completion=True)),
+            with_quotes=models.Count("id", filter=models.Q(quoted_at__isnull=False)),
+            with_completion=models.Count(
+                "id",
+                filter=models.Q(success_at__isnull=False)
+                | models.Q(failed_at__isnull=False),
+            ),
+            locked_count=models.Count("id", filter=models.Q(is_locked=True)),
+            auto_completion_count=models.Count(
+                "id", filter=models.Q(auto_completion=True)
+            ),
         )
 
         self.stdout.write("\n📈 KPI Data Coverage:")
         self.stdout.write(f"  Inquiries with quotes: {kpi_stats['with_quotes']}")
-        self.stdout.write(f"  Inquiries with completion: {kpi_stats['with_completion']}")
+        self.stdout.write(
+            f"  Inquiries with completion: {kpi_stats['with_completion']}"
+        )
         self.stdout.write(f"  Locked inquiries: {kpi_stats['locked_count']}")
         self.stdout.write(f"  Auto-completion: {kpi_stats['auto_completion_count']}")
 
@@ -687,8 +742,8 @@ class Command(BaseCommand):
         self.stdout.write("\n📊 KPI Summary:")
 
         # Grade distributions
-        quote_grades = {'A': 0, 'B': 0, 'C': 0, None: 0}
-        completion_grades = {'A': 0, 'B': 0, 'C': 0, None: 0}
+        quote_grades = {"A": 0, "B": 0, "C": 0, None: 0}
+        completion_grades = {"A": 0, "B": 0, "C": 0, None: 0}
         kpi_points = []
         locked_count = 0
         auto_completion_count = 0
@@ -706,6 +761,7 @@ class Command(BaseCommand):
             # Points calculation
             if inquiry.quote_grade or inquiry.completion_grade:
                 from apps.inquiries.utils import get_grade_points
+
                 quote_points = get_grade_points(inquiry.quote_grade)
                 completion_points = get_grade_points(inquiry.completion_grade)
                 kpi_points.append(quote_points + completion_points)
@@ -721,21 +777,27 @@ class Command(BaseCommand):
             if inquiry.quote_time:
                 quote_times.append(inquiry.quote_time.total_seconds() / 3600)  # hours
             if inquiry.resolution_time:
-                resolution_times.append(inquiry.resolution_time.total_seconds() / 3600)  # hours
+                resolution_times.append(
+                    inquiry.resolution_time.total_seconds() / 3600
+                )  # hours
 
         # Display grade distributions
-        total_with_quote_grade = sum(v for k, v in quote_grades.items() if k is not None)
+        total_with_quote_grade = sum(
+            v for k, v in quote_grades.items() if k is not None
+        )
         if total_with_quote_grade > 0:
             self.stdout.write("  Quote Grade Distribution:")
-            for grade in ['A', 'B', 'C']:
+            for grade in ["A", "B", "C"]:
                 count = quote_grades[grade]
                 pct = (count / total_with_quote_grade) * 100
                 self.stdout.write(f"    Grade {grade}: {count} ({pct:.1f}%)")
 
-        total_with_completion_grade = sum(v for k, v in completion_grades.items() if k is not None)
+        total_with_completion_grade = sum(
+            v for k, v in completion_grades.items() if k is not None
+        )
         if total_with_completion_grade > 0:
             self.stdout.write("  Completion Grade Distribution:")
-            for grade in ['A', 'B', 'C']:
+            for grade in ["A", "B", "C"]:
                 count = completion_grades[grade]
                 pct = (count / total_with_completion_grade) * 100
                 self.stdout.write(f"    Grade {grade}: {count} ({pct:.1f}%)")
@@ -747,7 +809,9 @@ class Command(BaseCommand):
             max_quote_time = max(quote_times)
             self.stdout.write("  Quote Timing (hours):")
             self.stdout.write(f"    Average: {avg_quote_time:.1f}h")
-            self.stdout.write(f"    Range: {min_quote_time:.1f}h - {max_quote_time:.1f}h")
+            self.stdout.write(
+                f"    Range: {min_quote_time:.1f}h - {max_quote_time:.1f}h"
+            )
 
         if resolution_times:
             avg_resolution_time = sum(resolution_times) / len(resolution_times)
@@ -755,7 +819,9 @@ class Command(BaseCommand):
             max_resolution_time = max(resolution_times)
             self.stdout.write("  Resolution Timing (hours):")
             self.stdout.write(f"    Average: {avg_resolution_time:.1f}h")
-            self.stdout.write(f"    Range: {min_resolution_time:.1f}h - {max_resolution_time:.1f}h")
+            self.stdout.write(
+                f"    Range: {min_resolution_time:.1f}h - {max_resolution_time:.1f}h"
+            )
 
         # Display KPI points
         if kpi_points:
@@ -777,6 +843,8 @@ class Command(BaseCommand):
             earliest = min(creation_times)
             latest = max(creation_times)
             range_days = (latest - earliest).days
-            self.stdout.write(f"  📅 Date Range: {earliest.date()} to {latest.date()} ({range_days} days)")
+            self.stdout.write(
+                f"  📅 Date Range: {earliest.date()} to {latest.date()} ({range_days} days)"
+            )
 
         self.stdout.write("")

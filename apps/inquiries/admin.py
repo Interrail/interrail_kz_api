@@ -64,8 +64,7 @@ class InquiryAdmin(admin.ModelAdmin):
     def attachment_display(self, obj):
         if obj.attachment:
             return format_html(
-                '<a href="{}" target="_blank">📎 View</a>',
-                obj.attachment.url
+                '<a href="{}" target="_blank">📎 View</a>', obj.attachment.url
             )
         return "-"
 
@@ -85,20 +84,11 @@ class KPIWeightsAdmin(admin.ModelAdmin):
         "new_customer_weight",
         "total_weight_display",
         "created_at",
-        "created_by"
+        "created_by",
     ]
-    list_filter = [
-        "created_at",
-        "created_by"
-    ]
-    search_fields = [
-        "created_by__username"
-    ]
-    readonly_fields = [
-        "created_at",
-        "updated_at",
-        "total_weight_display"
-    ]
+    list_filter = ["created_at", "created_by"]
+    search_fields = ["created_by__username"]
+    readonly_fields = ["created_at", "updated_at", "total_weight_display"]
     list_per_page = 20
     ordering = ["-created_at"]
 
@@ -111,16 +101,16 @@ class KPIWeightsAdmin(admin.ModelAdmin):
                     "follow_up_weight",
                     "conversion_rate_weight",
                     "new_customer_weight",
-                    "total_weight_display"
+                    "total_weight_display",
                 )
-            }
+            },
         ),
         (
             "Metadata",
             {
                 "fields": ("created_by", "created_at", "updated_at"),
-                "classes": ("collapse",)
-            }
+                "classes": ("collapse",),
+            },
         ),
     )
 
@@ -130,10 +120,10 @@ class KPIWeightsAdmin(admin.ModelAdmin):
         return format_html(
             '<span style="color: {}; font-weight: bold;">{}%</span>',
             color,
-            f"{total:.2f}"
+            f"{total:.2f}",
         )
-    total_weight_display.short_description = "Total Weight"
 
+    total_weight_display.short_description = "Total Weight"
 
     def save_model(self, request, obj, form, change):
         # Set created_by to current user if not already set
@@ -145,10 +135,8 @@ class KPIWeightsAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related("created_by")
 
     class Media:
-        css = {
-            'all': ('admin/css/custom_admin.css',)
-        }
-        js = ('admin/js/kpi_weights_validation.js',)
+        css = {"all": ("admin/css/custom_admin.css",)}
+        js = ("admin/js/kpi_weights_validation.js",)
 
 
 admin.site.register(PerformanceTarget)

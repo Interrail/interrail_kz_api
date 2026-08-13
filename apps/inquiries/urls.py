@@ -51,30 +51,61 @@ inquiry_patterns = [
     # Inquiry utility operations
     path("stats/", InquiryStatsApiView.as_view(), name="inquiry-stats"),
     path("export/", InquiryExportApiView.as_view(), name="inquiry-export"),
-
     # KPI Statistics APIs
-    path("kpi/manager/<int:manager_id>/", ManagerKPIApiView.as_view(), name="manager-kpi"),
+    path(
+        "kpi/manager/<int:manager_id>/", ManagerKPIApiView.as_view(), name="manager-kpi"
+    ),
     path("kpi/dashboard/", DashboardKPIApiView.as_view(), name="dashboard-kpi"),
     path("kpi/my-performance/", ManagerSelfKPIApiView.as_view(), name="my-kpi"),
-
     # KPI Action APIs
-    path("<int:inquiry_id>/quote/", InquiryQuoteApiView.as_view(), name="inquiry-quote"),
-    path("<int:inquiry_id>/success/", InquirySuccessApiView.as_view(), name="inquiry-success"),
-    path("<int:inquiry_id>/failed/", InquiryFailedApiView.as_view(), name="inquiry-failed"),
-    path("<int:inquiry_id>/kpi-lock/", InquiryKPILockApiView.as_view(), name="inquiry-kpi-lock"),
-
+    path(
+        "<int:inquiry_id>/quote/", InquiryQuoteApiView.as_view(), name="inquiry-quote"
+    ),
+    path(
+        "<int:inquiry_id>/success/",
+        InquirySuccessApiView.as_view(),
+        name="inquiry-success",
+    ),
+    path(
+        "<int:inquiry_id>/failed/",
+        InquiryFailedApiView.as_view(),
+        name="inquiry-failed",
+    ),
+    path(
+        "<int:inquiry_id>/kpi-lock/",
+        InquiryKPILockApiView.as_view(),
+        name="inquiry-kpi-lock",
+    ),
     # KPI Weights Management APIs
     path("kpi/weights/", KPIWeightsApiView.as_view(), name="kpi-weights"),
-    path("kpi/weights/update/", KPIWeightsUpdateApiView.as_view(), name="kpi-weights-update"),
-
+    path(
+        "kpi/weights/update/",
+        KPIWeightsUpdateApiView.as_view(),
+        name="kpi-weights-update",
+    ),
     # Performance Target Management APIs
     path("targets/", PerformanceTargetListApiView.as_view(), name="targets-list"),
-    path("targets/create/", PerformanceTargetCreateApiView.as_view(), name="targets-create"),
-    path("targets/bulk-update/", PerformanceTargetUpdateApiView.as_view(), name="targets-bulk-update"),
-    path("targets/<int:target_id>/delete/", PerformanceTargetDeleteApiView.as_view(), name="targets-delete"),
-
+    path(
+        "targets/create/",
+        PerformanceTargetCreateApiView.as_view(),
+        name="targets-create",
+    ),
+    path(
+        "targets/bulk-update/",
+        PerformanceTargetUpdateApiView.as_view(),
+        name="targets-bulk-update",
+    ),
+    path(
+        "targets/<int:target_id>/delete/",
+        PerformanceTargetDeleteApiView.as_view(),
+        name="targets-delete",
+    ),
     # Performance Grade API
-    path("targets/my-grade/", ManagerPerformanceGradeApiView.as_view(), name="my-performance-grade"),
+    path(
+        "targets/my-grade/",
+        ManagerPerformanceGradeApiView.as_view(),
+        name="my-performance-grade",
+    ),
 ]
 
 urlpatterns = inquiry_patterns

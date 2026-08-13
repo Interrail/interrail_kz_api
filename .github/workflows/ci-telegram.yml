@@ -160,8 +160,14 @@ jobs:
         run: |
           (python scripts/telegram_notifier.py update "🧪 Running Tests" 70 "running") || true
 
-          # Run tests with coverage and detailed output
-          pytest --cov=apps --cov-fail-under=80 --cov-report=html --cov-report=json -v --tb=short > test_results.txt 2>&1 || true
+          # Run tests with coverage and detailed output. The exit status is kept
+          # rather than discarded: the deploy job gates on this job succeeding, so
+          # swallowing it meant a failing suite still shipped. The step still parses
+          # results and reports to Telegram below, then exits with pytest's status.
+          # Coverage threshold lives in pytest.ini only — two different numbers in
+          # two places is how they drifted to 60 and 80 with neither being met.
+          pytest --cov=apps --cov-report=html --cov-report=json -v --tb=short > test_results.txt 2>&1 || PYTEST_STATUS=$?
+          cat test_results.txt
 
           # Extract coverage percentage and set as output
           COVERAGE=$(python -c "import json; data=json.load(open('coverage.json')); print(int(data['totals']['percent_covered']))")
@@ -229,6 +235,9 @@ jobs:
           echo "completed_steps=$STEPS" >> $GITHUB_OUTPUT
 
           echo "Tests completed with $COVERAGE% coverage!"
+
+          # Reporting is done; now let the job fail if the suite did.
+          exit ${PYTEST_STATUS:-0}
         env:
           SECRET_KEY: test-secret-key
           DEBUG: True
