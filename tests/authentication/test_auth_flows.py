@@ -335,3 +335,77 @@ class TestUserTypeValidation:
 
         response = api_client.post(register_url, data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestTokenTypeEnforcement:
+    """A refresh token must not be usable as an API credential.
+
+    The rejected responses are 403, not 401: CookieJWTAuthentication extends
+    BaseAuthentication without an authenticate_header(), and DRF downgrades to
+    403 when no authenticator offers a WWW-Authenticate challenge. That is
+    pre-existing API behaviour, asserted here as-is rather than changed.
+    """
+
+    @pytest.fixture
+    def profile_url(self):
+        return reverse("authentication:profile")
+
+    @pytest.fixture
+    def test_user(self):
+        return User.objects.create_user(
+            username="tokentypeuser",
+            email="tokentype@example.com",
+            password="testpassword123",
+            user_type="manager",
+        )
+
+    def test_access_token_authenticates(self, api_client, profile_url, test_user):
+        """Baseline: the access token is accepted, both as cookie and as Bearer."""
+        access = str(RefreshToken.for_user(test_user).access_token)
+
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+        assert api_client.get(profile_url).status_code == status.HTTP_200_OK
+
+        api_client.credentials()
+        api_client.cookies["access_token"] = access
+        assert api_client.get(profile_url).status_code == status.HTTP_200_OK
+
+    def test_refresh_token_is_rejected_as_bearer(
+        self, api_client, profile_url, test_user
+    ):
+        """A refresh token carries a different token_type and must not authenticate."""
+        refresh = str(RefreshToken.for_user(test_user))
+
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh}")
+        response = api_client.get(profile_url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_refresh_token_is_rejected_in_cookie(
+        self, api_client, profile_url, test_user
+    ):
+        """Same via the cookie the browser actually sends."""
+        refresh = str(RefreshToken.for_user(test_user))
+
+        api_client.cookies["access_token"] = refresh
+        response = api_client.get(profile_url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_blacklisted_refresh_token_cannot_mint_a_new_access_token(
+        self, api_client, test_user
+    ):
+        """Logout must actually revoke: the blacklisted token buys nothing at /refresh/.
+
+        Asserting it against a protected endpoint would prove nothing — AccessToken
+        turns away every refresh token on token_type alone, blacklisted or not. The
+        refresh endpoint is where the blacklist is the only thing standing in the way.
+        """
+        refresh = RefreshToken.for_user(test_user)
+        refresh.blacklist()
+
+        api_client.cookies["refresh_token"] = str(refresh)
+        response = api_client.post(reverse("authentication:refresh"))
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
