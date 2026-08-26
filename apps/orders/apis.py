@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
@@ -72,7 +74,9 @@ class ClientSuggestionsApiView(APIView):
     )
     def get(self, request):
         search = request.query_params.get("search", "").strip()
-        results = OrderSelectors.get_client_suggestions(search=search, limit=self.LIMIT)
+        results = OrderSelectors.get_client_suggestions(
+            search=search, limit=self.LIMIT, user=request.user
+        )
         return Response({"results": results}, status=status.HTTP_200_OK)
 
 
@@ -93,7 +97,9 @@ class OrderCreateApiView(APIView):
         destination = serializers.CharField(max_length=255)
         transport_type = serializers.ChoiceField(choices=Order.TRANSPORT_TYPE_CHOICES)
         units_count = serializers.IntegerField(min_value=1)
-        total_price = serializers.DecimalField(max_digits=14, decimal_places=2)
+        total_price = serializers.DecimalField(
+            max_digits=14, decimal_places=2, min_value=Decimal("0.01")
+        )
         currency = serializers.ChoiceField(
             choices=Order.CURRENCY_CHOICES, default="USD"
         )
@@ -150,7 +156,7 @@ class OrderListApiView(APIView):
     )
     def get(self, request):
         queryset = OrderSelectors.get_orders_list(
-            search=request.query_params.get("search", "")
+            search=request.query_params.get("search", ""), user=request.user
         )
         return get_paginated_response(
             pagination_class=self.Pagination,
@@ -176,7 +182,7 @@ class OrderDetailApiView(APIView):
     )
     def get(self, request, order_id):
         try:
-            order = OrderSelectors.get_order_by_id(order_id=order_id)
+            order = OrderSelectors.get_order_by_id(order_id=order_id, user=request.user)
         except Order.DoesNotExist:
             return Response(
                 {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND
@@ -201,7 +207,10 @@ class OrderUpdateApiView(APIView):
         )
         units_count = serializers.IntegerField(min_value=1, required=False)
         total_price = serializers.DecimalField(
-            max_digits=14, decimal_places=2, required=False
+            max_digits=14,
+            decimal_places=2,
+            required=False,
+            min_value=Decimal("0.01"),
         )
         currency = serializers.ChoiceField(
             choices=Order.CURRENCY_CHOICES, required=False
@@ -215,7 +224,7 @@ class OrderUpdateApiView(APIView):
     )
     def put(self, request, order_id):
         try:
-            order = OrderSelectors.get_order_by_id(order_id=order_id)
+            order = OrderSelectors.get_order_by_id(order_id=order_id, user=request.user)
         except Order.DoesNotExist:
             return Response(
                 {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND

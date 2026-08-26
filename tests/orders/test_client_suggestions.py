@@ -35,10 +35,17 @@ class TestClientSuggestions:
         self, api_client, manager_user
     ):
         i1 = Inquiry.objects.create(
-            client="EURASIA LOGISTICS JSC", text="x", status="success"
+            client="EURASIA LOGISTICS JSC",
+            text="x",
+            status="success",
+            sales_manager=manager_user,
         )
-        Inquiry.objects.create(client="eurasia logistics jsc", text="x")
-        Inquiry.objects.create(client="InterRail Europe GmbH", text="x")
+        Inquiry.objects.create(
+            client="eurasia logistics jsc", text="x", sales_manager=manager_user
+        )
+        Inquiry.objects.create(
+            client="InterRail Europe GmbH", text="x", sales_manager=manager_user
+        )
         Order.objects.create(
             inquiry=i1,
             client="Fresh Logistics LLP",
@@ -61,8 +68,12 @@ class TestClientSuggestions:
         assert "fresh logistics llp" in lowered
 
     def test_search_filters_case_insensitively(self, api_client, manager_user):
-        Inquiry.objects.create(client="EURASIA LOGISTICS JSC", text="x")
-        Inquiry.objects.create(client="InterRail Europe GmbH", text="x")
+        Inquiry.objects.create(
+            client="EURASIA LOGISTICS JSC", text="x", sales_manager=manager_user
+        )
+        Inquiry.objects.create(
+            client="InterRail Europe GmbH", text="x", sales_manager=manager_user
+        )
 
         auth(api_client, manager_user)
         response = api_client.get(

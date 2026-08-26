@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -31,7 +33,11 @@ class Order(TimeStampModel):
     destination = models.CharField(max_length=255)
     transport_type = models.CharField(max_length=20, choices=TRANSPORT_TYPE_CHOICES)
     units_count = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    total_price = models.DecimalField(max_digits=14, decimal_places=2)
+    total_price = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="USD")
     created_by = models.ForeignKey(
         CustomUser,

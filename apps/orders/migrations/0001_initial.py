@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('inquiries', '0006_alter_inquiry_attachment'),
+        ('inquiries', '0005_performancetarget'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
