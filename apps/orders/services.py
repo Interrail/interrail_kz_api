@@ -8,6 +8,11 @@ from apps.inquiries.models import Inquiry
 from .models import Order
 
 
+def _normalize_client(name: str) -> str:
+    """Collapse whitespace so 'ACME  LLP ' and 'ACME LLP' stay one client."""
+    return " ".join(name.split())
+
+
 class OrderServices:
     """
     Services for order-related business logic
@@ -44,7 +49,7 @@ class OrderServices:
         with transaction.atomic():
             order = Order(
                 inquiry=inquiry,
-                client=(client or inquiry.client).strip(),
+                client=_normalize_client(client or inquiry.client),
                 departure=departure.strip(),
                 destination=destination.strip(),
                 transport_type=transport_type,
@@ -73,7 +78,9 @@ class OrderServices:
         for field in editable:
             if field in fields and fields[field] is not None:
                 value = fields[field]
-                if isinstance(value, str):
+                if field == "client":
+                    value = _normalize_client(value)
+                elif isinstance(value, str):
                     value = value.strip()
                 setattr(order, field, value)
 

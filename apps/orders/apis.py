@@ -49,6 +49,33 @@ class OrderOutputSerializer(serializers.ModelSerializer):
         ]
 
 
+class ClientSuggestionsApiView(APIView):
+    """
+    Distinct client names from inquiries and orders, for entry autocomplete.
+    Keeps managers picking an existing spelling instead of typing a new one.
+    """
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsManagerOrAdmin]
+
+    LIMIT = 20
+
+    @extend_schema(
+        tags=["Orders"],
+        summary="Client name suggestions",
+        parameters=[
+            OpenApiParameter(
+                "search", OpenApiTypes.STR, description="Substring, case-insensitive"
+            ),
+        ],
+        responses={200: inline_serializer(fields={"results": serializers.ListField()})},
+    )
+    def get(self, request):
+        search = request.query_params.get("search", "").strip()
+        results = OrderSelectors.get_client_suggestions(search=search, limit=self.LIMIT)
+        return Response({"results": results}, status=status.HTTP_200_OK)
+
+
 class OrderCreateApiView(APIView):
     """
     Create an order from a successful inquiry
