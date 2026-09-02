@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/auth/", include("apps.authentication.urls")),
     path("api/users/", include("apps.accounts.urls")),
     path("api/inquiries/", include("apps.inquiries.urls")),
+    path("api/orders/", include("apps.orders.urls")),
     path("api/exhibition-leads/", include("apps.exhibition_leads.urls")),
     path("api/", include("apps.core.urls")),
     # API documentation

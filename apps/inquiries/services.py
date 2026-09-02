@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.utils import timezone
 
 from apps.accounts.models import CustomUser
@@ -143,6 +144,18 @@ class InquiryServices:
             update_fields.append("sales_manager")
 
         if status is not None:
+            # An ordered inquiry is the source record of a live deal: once an
+            # order exists, the inquiry must stay 'success'. (Reverse one-to-one:
+            # RelatedObjectDoesNotExist subclasses AttributeError, so getattr
+            # is the safe accessor.)
+            if (
+                status != "success"
+                and inquiry.status == "success"
+                and getattr(inquiry, "order", None) is not None
+            ):
+                raise ValueError(
+                    "Cannot change status: an order exists for this inquiry"
+                )
             inquiry.status = status
             update_fields.append("status")
 
@@ -167,11 +180,18 @@ class InquiryServices:
         if inquiry.status in ["success", "quoted"]:
             raise ValueError("Cannot delete inquiry with success or quoted status")
 
-        # Clean up attachment file if exists
-        if inquiry.attachment:
-            inquiry.attachment.delete(save=False)
+        # Capture the file before delete(); remove it only once the row is
+        # actually gone, so a refused delete never destroys the attachment
+        attachment_name = inquiry.attachment.name if inquiry.attachment else None
+        storage = inquiry.attachment.storage if inquiry.attachment else None
 
-        inquiry.delete()
+        try:
+            inquiry.delete()
+        except ProtectedError:
+            raise ValueError("Cannot delete inquiry: an order exists for it")
+
+        if attachment_name and storage:
+            storage.delete(attachment_name)
 
 
 class InquiryKPIServices:

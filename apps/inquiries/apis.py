@@ -118,6 +118,7 @@ class InquiryListApiView(APIView):
         attachment_url = serializers.SerializerMethodField()
         attachment_name = serializers.SerializerMethodField()
         has_attachment = serializers.SerializerMethodField()
+        order_id = serializers.SerializerMethodField()
         status_display = serializers.CharField(
             source="get_status_display", read_only=True
         )
@@ -143,6 +144,7 @@ class InquiryListApiView(APIView):
                 "status_display",
                 "sales_manager",
                 "is_new_customer",
+                "order_id",
                 "created_at",
                 "updated_at",
             ]
@@ -155,6 +157,12 @@ class InquiryListApiView(APIView):
 
         def get_has_attachment(self, obj):
             return bool(obj.attachment)
+
+        def get_order_id(self, obj):
+            # Reverse one-to-one: RelatedObjectDoesNotExist subclasses
+            # AttributeError, so getattr is the safe accessor.
+            order = getattr(obj, "order", None)
+            return order.id if order else None
 
     @extend_schema(
         tags=["Inquiries"],

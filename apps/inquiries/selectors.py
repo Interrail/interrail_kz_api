@@ -97,7 +97,7 @@ class InquirySelectors:
         Get filtered and paginated inquiries list
         """
         filters = filters or {}
-        qs = Inquiry.objects.select_related("sales_manager").all()
+        qs = Inquiry.objects.select_related("sales_manager", "order").all()
         return InquiryFilter(filters, qs).qs
 
     @staticmethod

@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.authentication",
     "apps.inquiries",
+    "apps.orders",
     "apps.exhibition_leads",
 ]
 
