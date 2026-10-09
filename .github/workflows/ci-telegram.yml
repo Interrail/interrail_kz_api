@@ -15,7 +15,7 @@ env:
 jobs:
   notify-start:
     name: 🚀 Pipeline Start Notification
-    runs-on: ubuntu-latest
+    runs-on: homeserver  # self-hosted k3s runners (devops/github-runner/homeserver); was ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     outputs:
       start_time: ${{ steps.start_time.outputs.start_time }}
@@ -64,7 +64,7 @@ jobs:
 
   test:
     name: 🧪 Tests & Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: homeserver  # self-hosted k3s runners (devops/github-runner/homeserver); was ubuntu-latest
     needs: notify-start
     outputs:
       coverage_percentage: ${{ steps.coverage.outputs.coverage_percentage }}
@@ -292,7 +292,7 @@ jobs:
 
   security-scan:
     name: 🔒 Security Scan
-    runs-on: ubuntu-latest
+    runs-on: homeserver  # self-hosted k3s runners (devops/github-runner/homeserver); was ubuntu-latest
     needs: notify-start
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
