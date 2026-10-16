@@ -12,7 +12,16 @@
       "Bash(git push * main)",
       "Bash(git push * master)",
       "Bash(git push * HEAD:main)",
-      "Bash(git push * HEAD:master)"
+      "Bash(git push * HEAD:master)",
+      "Bash(git push *:main)",
+      "Bash(git push *:master)",
+      "Bash(git push *:refs/heads/main)",
+      "Bash(git push *:refs/heads/master)",
+      "Bash(git push * +main)",
+      "Bash(git push * +master)",
+      "Bash(gh workflow run *)",
+      "Bash(gh -* workflow run *)",
+      "Bash(gh release create *)"
     ]
   }
 }
