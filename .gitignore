@@ -181,3 +181,7 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 uv.lock
+
+# Local agent state
+.claude/settings.local.json
+.claude/worktrees/
